@@ -186,3 +186,6 @@ miniworld/
 
 # Experimental utility scripts (contains Chinese for internal use)
 scripts/utils/
+
+# Datasets global_views (large binary files, not needed for repo)
+datasets/global_views/

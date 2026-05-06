@@ -10,14 +10,17 @@ Evaluating Vision-Language Models (VLMs) on causal reasoning tasks in grid world
 
 ```bash
 # Clone and setup
-git clone https://github.com/Lucas-Jin-Qh/Towards-Reliable-VLM-Judges.git
+git clone https://github.com/xinyuw922-pixel/Towards-Reliable-VLM-Judges.git
 cd Towards-Reliable-VLM-Judges
 
 # Install dependencies
-pip install Pillow pandas numpy scipy python-dotenv
+pip install -r requirements_current.txt
 
-# Run full pipeline (generate exams -> VLM responses -> scoring)
-./scripts/run_full_pipeline.sh
+# Run MiniGrid evaluation pipeline
+./scripts/run_full_pipeline_minigrid.sh
+
+# Run MiniWorld evaluation pipeline
+./scripts/run_full_pipeline_miniworld.sh
 ```
 
 ---
@@ -74,20 +77,37 @@ MOONSHOT_API_KEY=your_moonshot_key
 
 ## Dataset Structure
 
+### Pipeline Outputs (`outputs/`)
+
+All generated data is stored in the `outputs/` directory. This directory is automatically created when running the pipeline scripts.
+
 ```
-datasets/
-├── minigrid/                    # MiniGrid evaluation data
-│   ├── taska/task_a_exam.jsonl  # Task A (next state)
-│   ├── taskb/task_b_exam.jsonl  # Task B (perception)
-│   ├── taskc/task_c_exam.jsonl  # Task C (trajectory)
-│   └── taskd/task_d_exam.jsonl  # Task D (generalization)
-├── global_views/                # Raw trajectory data
-    ├── doorkey/
-    ├── keycorridor/
-    ├── memory/
-    ├── multiroom/
-    ├── redblue/
-    └── lavagap/
+outputs/                        # Pipeline outputs (auto-generated)
+├── raw_data/                   # Raw trajectory data
+│   ├── doorkey/
+│   ├── keycorridor/
+│   ├── memory/
+│   ├── multiroom/
+│   ├── redblue/
+│   └── lavagap/
+├── exams_abc/                  # Task A/B/C/E exams + mock responses + scores
+├── exams_taskd/                # Task D exam + scores
+├── ablation_k4/               # Ablation: k=4 context frames
+├── ablation_k12/              # Ablation: k=12 context frames
+├── split/                     # Task A split/composite experiments
+├── exams_taskc_split/         # Task C split/composite
+├── ablation/                  # Action ablation (shuffle/mask)
+└── miniworld/                  # MiniWorld pipeline outputs
+    ├── taskA-MW-v2-prototype/
+    ├── taskA-MW-v2-crossenv/
+    ├── taskC-MW-family-prototypes/
+    ├── taskC-MW-formal-bank/
+    ├── taskD-MW-fourrooms/
+    ├── taskD-MW-storyboard-prototype/
+    ├── taskD-MW-highdisc-round1/
+    ├── taskD-MW-highdisc-round2/
+    ├── taskD-MW-highdisc-round3/
+    └── taskD-MW-migration-showcase/
 ```
 ---
 
@@ -97,48 +117,79 @@ datasets/
 
 The easiest way to run evaluation:
 
+#### MiniGrid Pipeline
+
 ```bash
-# Full pipeline with trajectory generation
-./scripts/run_full_pipeline.sh
+# Full pipeline (generate trajectories -> exams -> VLM simulation -> scoring)
+./scripts/run_full_pipeline_minigrid.sh
 
 # Skip trajectory generation (use existing data)
-./scripts/run_full_pipeline.sh --skip-trajectories
+./scripts/run_full_pipeline_minigrid.sh --skip-trajectories
 
-# MiniGrid only or MiniWorld only
-./scripts/run_full_pipeline.sh --minigrid-only
-./scripts/run_full_pipeline.sh --miniworld-only
+# Skip sampling/exams generation (VLM simulation only)
+./scripts/run_full_pipeline_minigrid.sh --skip-sampling --skip-exams
 
 # Custom parameters
-./scripts/run_full_pipeline.sh --seed 42 --correct-rate 0.65 --c-k 8
+./scripts/run_full_pipeline_minigrid.sh --seed 42 --correct-rate 0.65 --c-k 8
+
+# Ablation studies only
+./scripts/run_full_pipeline_minigrid.sh --skip-trajectories --skip-sampling --skip-exams --skip-split --skip-vlm
 ```
 
-### Step-by-Step Evaluation
-
-#### 1. Generate Exams
+#### MiniWorld Pipeline
 
 ```bash
-# Build exams from trajectories
-python scripts/build/build_exam.py \
-  --root datasets/global_views \
-  --seed 42 \
-  --c-k 8 \
-  --out-dir outputs/exams
+# Full pipeline (generate tasks -> requests -> VLM simulation -> scoring)
+./scripts/run_full_pipeline_miniworld.sh
 
-# Generate ablation variants
-python scripts/build/build_exam.py --root datasets/global_views --seed 42 --c-k 4 --out-dir outputs/ablation_k4
-python scripts/build/build_exam.py --root datasets/global_views --seed 42 --c-k 12 --out-dir outputs/ablation_k12
+# Skip specific tasks
+./scripts/run_full_pipeline_miniworld.sh --skip-task-c --skip-task-d
 
-# Generate split format
-python scripts/build/split_taskA_frames.py --exam_dir outputs/exams --out_dir outputs/split --num 50
+# Custom parameters
+./scripts/run_full_pipeline_miniworld.sh --seed 42 --correct-rate 0.65 --obs-width 640 --obs-height 480
+
+# Skip VLM simulation (exam generation only)
+./scripts/run_full_pipeline_miniworld.sh --skip-vlm
 ```
 
-#### 2. Run Inference
+### Step-by-Step Evaluation (MiniGrid)
 
-Core script: `scripts/infer/run_inference.py`
+#### 1. Generate Trajectories
 
 ```bash
-python scripts/infer/run_inference.py \
-  --requests datasets/minigrid/taska/task_a_exam.jsonl \
+# Generate raw trajectory data
+python scripts/02_trajectories/minigrid/tasks/doorkey/gen_doorkey_triplets.py --out-dir outputs/raw_data/doorkey --num 10
+python scripts/02_trajectories/minigrid/tasks/keycorridor/gen_keycorridor_triplets.py --out-dir outputs/raw_data/keycorridor --num 10
+# ... other tasks
+```
+
+#### 2. Sample Data
+
+```bash
+python scripts/sample_raw_data.py --src outputs/raw_data --dst scripts/outputs/raw_data --seed 42
+```
+
+#### 3. Build Exams
+
+```bash
+# Build Task A/B/C exams
+python scripts/01_generators/minigrid/build_exam.py --root scripts/outputs/raw_data --seed 42 --c-k 8 --out-dir outputs/exams_abc
+
+# Build Task D exam
+python scripts/01_generators/minigrid/generate_task_d_v3_144.py --raw-root scripts/outputs/raw_data --out-dir outputs/exams_taskd --groups-per-env 8
+
+# Ablation variants
+python scripts/01_generators/minigrid/build_exam.py --root scripts/outputs/raw_data --seed 42 --c-k 4 --out-dir outputs/ablation_k4
+python scripts/01_generators/minigrid/build_exam.py --root scripts/outputs/raw_data --seed 42 --c-k 12 --out-dir outputs/ablation_k12
+```
+
+#### 4. Run Inference
+
+Core script: `scripts/04_inference/run_inference.py`
+
+```bash
+python scripts/04_inference/run_inference.py \
+  --requests outputs/exams_abc/task_a_exam.jsonl \
   --responses_dir runs/my_run/taskA \
   --model gpt-4o \
   --backend openai_compatible \
@@ -157,24 +208,86 @@ python scripts/infer/run_inference.py \
 | Qwen VL | `openai_compatible` | `zhizengzeng` |
 | Kimi | `openai_compatible` | `moonshot` |
 
-#### 3. Score Results
+#### 5. Score Results
 
 ```bash
-# Score MiniGrid
-python scripts/score/score_exam.py \
-  --exam_dir outputs/exams \
-  --responses runs/my_run/responses.jsonl \
-  --out outputs/scores/score.json
+# Score Task A/B/C/E exams
+python scripts/05_scoring/score_exam.py \
+  --exam_dir outputs/exams_abc \
+  --responses outputs/exams_abc/responses_mock.jsonl \
+  --out outputs/exams_abc/score_mock.json
+
+# Score Task D
+python scripts/05_scoring/score_exam.py \
+  --exam_dir outputs/exams_taskd \
+  --responses outputs/exams_abc/responses_mock.jsonl \
+  --out outputs/exams_taskd/score_mock.json
 
 # Compute IDR (Intervention Discrimination Rate)
-python scripts/score/compute_idr.py \
-  --per-row-csv outputs/scores/per_row.csv \
-  --output-csv outputs/scores/idr_results.csv
+python scripts/05_scoring/compute_idr.py \
+  --per-row-csv outputs/exams_abc/per_row.csv \
+  --output-csv outputs/exams_abc/idr_results.csv
 
 # Compute LES (Leakage Effect Size)
-python scripts/score/compute_les.py \
-  --per-row-csv outputs/scores/per_row.csv \
-  --output-csv outputs/scores/les_results.csv
+python scripts/05_scoring/compute_les.py \
+  --per-row-csv outputs/exams_abc/per_row.csv \
+  --output-csv outputs/exams_abc/les_results.csv
+```
+
+### Step-by-Step Evaluation (MiniWorld)
+
+#### 1. Generate Tasks
+
+```bash
+# Task A: next-state prediction
+python scripts/02_trajectories/miniworld/gen_taskA_MW_v2_prototype.py \
+  --out_dir outputs/miniworld/taskA-MW-v2-prototype \
+  --obs_width 320 --obs_height 240
+
+# Task C: trajectory classification
+python scripts/02_trajectories/miniworld/gen_taskC_MW_formal_exam.py \
+  --out_dir outputs/miniworld/taskC-MW-formal-bank \
+  --obs_width 320 --obs_height 240 --auto-deps
+
+# Task D: cross-environment generalization
+python scripts/02_trajectories/miniworld/gen_taskD_MW_fourrooms.py \
+  --out_dir outputs/miniworld/taskD-MW-fourrooms \
+  --obs_width 640 --obs_height 480 --num_questions 15
+```
+
+#### 2. Build API Requests
+
+```bash
+python scripts/04_inference/build_taskA_MW_v2_requests.py \
+  --exam_jsonl outputs/miniworld/taskA-MW-v2-prototype/taskA-MW-v2-prototype.jsonl \
+  --out outputs/miniworld/taskA-MW-v2-prototype/requests.jsonl
+
+python scripts/04_inference/build_taskC_MW_formal_exam_requests.py \
+  --exam_jsonl outputs/miniworld/taskC-MW-formal-bank/task_c_exam.jsonl \
+  --out outputs/miniworld/taskC-MW-formal-bank/requests.jsonl
+```
+
+#### 3. Run Inference
+
+```bash
+python scripts/04_inference/run_inference.py \
+  --requests outputs/miniworld/taskA-MW-v2-prototype/requests.jsonl \
+  --responses_dir runs/miniworld/taskA \
+  --model gpt-4o
+```
+
+#### 4. Score Results
+
+```bash
+python scripts/05_scoring/score_taskA_MW_v2_inference.py \
+  --exam_jsonl outputs/miniworld/taskA-MW-v2-prototype/taskA-MW-v2-prototype.jsonl \
+  --responses outputs/miniworld/taskA-MW-v2-prototype/responses.jsonl \
+  --out outputs/miniworld/taskA-MW-v2-prototype/score_report.json
+
+python scripts/05_scoring/score_taskC_MW_inference.py \
+  --exam_jsonl outputs/miniworld/taskC-MW-formal-bank/task_c_exam.jsonl \
+  --responses outputs/miniworld/taskC-MW-formal-bank/responses.jsonl \
+  --out outputs/miniworld/taskC-MW-formal-bank/score_summary.json
 ```
 
 ---
@@ -196,47 +309,71 @@ python scripts/score/compute_les.py \
 
 ```
 GridWM-Judge/
-├── datasets/
-│   ├── minigrid/            # MiniGrid exam data
-│   │   ├── taska/           # Task A: next state prediction
-│   │   ├── taskb/           # Task B: perception & spatial reasoning
-│   │   ├── taskc/           # Task C: trajectory outcome
-│   │   ├── taskd/           # Task D: cross-environment generalization
-│   │   └── taske/           # Task E: complex reasoning chains
-│   ├── miniworld/           # MiniWorld exam data
-│   └── global_views/        # Raw trajectory data
-│       ├── doorkey/
-│       ├── keycorridor/
-│       ├── memory/
-│       ├── multiroom/
-│       ├── redblue/
-│       └── lavagap/
+├── outputs/                  # Pipeline outputs (auto-generated)
+│   ├── raw_data/            # Raw trajectory data
+│   ├── exams_abc/           # Task A/B/C/E exams + mock responses + scores
+│   ├── exams_taskd/         # Task D exam + scores
+│   ├── ablation_k4/        # Ablation: k=4 context frames
+│   ├── ablation_k12/        # Ablation: k=12 context frames
+│   ├── split/              # Task A split/composite experiments
+│   ├── exams_taskc_split/  # Task C split/composite
+│   ├── ablation/           # Action ablation (shuffle/mask)
+│   └── miniworld/          # MiniWorld pipeline outputs
 ├── scripts/
-│   ├── run_full_pipeline.sh # One-click evaluation
-│   ├── build/               # Exam generation
-│   │   ├── build_exam.py
-│   │   ├── split_taskA_frames.py
-│   │   └── gen_action_ablation.py
-│   ├── infer/              # VLM inference
+│   ├── run_full_pipeline_minigrid.sh    # MiniGrid one-click evaluation
+│   ├── run_full_pipeline_miniworld.sh   # MiniWorld one-click evaluation
+│   ├── run_full_pipeline.sh             # Legacy combined pipeline
+│   ├── sample_raw_data.py               # Data sampling utility
+│   ├── exam_schema.py                   # Exam schema definitions
+│   ├── 01_generators/                  # Exam generation
+│   │   └── minigrid/
+│   │       ├── build_exam.py
+│   │       ├── build_taskA_split_format_probe_requests.py
+│   │       ├── build_taskce_api_smoke_requests.py
+│   │       ├── build_exam_task_e_v12.py
+│   │       ├── build_exam_task_e_v13_*.py
+│   │       └── generate_task_d_v3_144.py
+│   ├── 02_trajectories/                # Trajectory generation
+│   │   ├── minigrid/
+│   │   │   ├── config.py
+│   │   │   ├── gen_action_ablation.py
+│   │   │   ├── split_taskA_frames.py
+│   │   │   └── tasks/
+│   │   │       ├── doorkey/
+│   │   │       ├── keycorridor/
+│   │   │       ├── lavagap/
+│   │   │       ├── memory/
+│   │   │       ├── multiroom/
+│   │   │       └── redblue/
+│   │   └── miniworld/                  # MiniWorld trajectory generators
+│   ├── 03_postprocess/                 # Post-processing
+│   │   ├── audit/                       # Audit-related scripts
+│   │   └── framing/                     # Framing transformation
+│   ├── 04_inference/                    # VLM inference
 │   │   ├── run_inference.py
-│   │   └── run_canonical_pipeline.py
-│   ├── score/              # Evaluation & metrics
+│   │   ├── run_canonical_pipeline.py
+│   │   ├── generate_mock_responses.py
+│   │   ├── generate_mock_miniworld.py
+│   │   ├── build_taskA_MW_v2_requests.py
+│   │   ├── build_taskC_MW_formal_exam_requests.py
+│   │   └── build_taskD_MW_*.py
+│   ├── 05_scoring/                      # Evaluation & metrics
 │   │   ├── score_exam.py
-│   │   ├── compute_idr.py
-│   │   ├── compute_les.py
-│   │   ├── compute_vcc_oracle.py
-│   │   └── score_action_ablation.py
-│   ├── miniworld/          # MiniWorld environment scripts
-│   │   ├── gen_*.py        # Task generation scripts
-│   │   ├── build_*_requests.py
-│   │   ├── score_*_inference.py
-│   │   └── render_*_pdf.py
-│   ├── export/              # Results export
-│   ├── datasets/            # Dataset utilities
-│   ├── schema/              # Shared utilities
-│   └── utils/               # Helper scripts
-├── outputs/                  # Generated exams & results
-├── config.py                 # Configuration
+│   │   ├── score_miniworld_canonical.py
+│   │   ├── score_taskA_MW_v2_inference.py
+│   │   ├── score_taskC_MW_inference.py
+│   │   └── score_taskD_MW_*.py
+│   ├── 06_rendering/                   # PDF/figure rendering
+│   │   ├── render_taskA_MW_*.py
+│   │   ├── render_taskC_MW_*.py
+│   │   ├── render_taskD_MW_*.py
+│   │   ├── render_taskb_review_pdf.py
+│   │   └── render_taskdr_review_pdf.py
+│   └── 08_export/                      # Results export
+├── datasets/                            # Static datasets (empty placeholder)
+├── config.py                           # Configuration
+├── requirements_current.txt            # Full dependencies
+├── requirements_miniworld.txt          # MiniWorld dependencies
 └── LICENSE
 ```
 
@@ -244,12 +381,30 @@ GridWM-Judge/
 
 ## Advanced Options
 
-### Ablation Studies
+### Ablation Studies (MiniGrid)
 
 ```bash
 # Test with different context sizes
-./scripts/run_full_pipeline.sh --c-k 4   # Fewer frames
-./scripts/run_full_pipeline.sh --c-k 12  # More frames
+./scripts/run_full_pipeline_minigrid.sh --c-k 4   # Fewer frames
+./scripts/run_full_pipeline_minigrid.sh --c-k 12  # More frames
+
+# Action ablation (shuffle/mask actions)
+python scripts/02_trajectories/minigrid/gen_action_ablation.py \
+  --exam outputs/exams_abc/task_a_exam.jsonl \
+  --output-dir outputs/ablation
+```
+
+### VLM Provider Configuration
+
+Edit `config.py` or set environment variables:
+
+```bash
+# Use specific provider
+export VLM_PROVIDER=zhizengzeng  # or "gemini", "moonshot"
+export VLM_MODEL=gpt-4o
+
+# For MiniWorld with headless rendering
+./scripts/run_full_pipeline_miniworld.sh --obs-width 640 --obs-height 480
 ```
 
 ### Oracle Inference (for VCC scoring)
@@ -259,11 +414,11 @@ Oracle is a text-only baseline (no images) used to measure pixel-text consistenc
 ```bash
 # Build oracle requests
 python scripts/build/build_oracle_requests.py \
-  --exam datasets/minigrid/taskc/task_c_exam.jsonl \
+  --exam outputs/exams_abc/task_c_exam.jsonl \
   --output runs/my_run/oracle/requests.jsonl
 
 # Run oracle inference
-python scripts/infer/run_oracle_inference.py \
+python scripts/04_inference/run_oracle_inference.py \
   --exam runs/my_run/oracle/requests.jsonl \
   --output-dir runs/my_run/oracle
 ```

@@ -1,8 +1,0 @@
-{
-  "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taske",
-  "default_exam": "task_e_exam_v13.jsonl",
-  "rows": 325,
-  "mode": "regenerated",
-  "source_script": "scripts/build_exam_task_e_v13_candidate.py",
-  "note": "Current Task E main candidate. Auxiliary slices such as strengthening, mandatory, and balanced_minismoke are intentionally excluded from the default full-run package."
-}
