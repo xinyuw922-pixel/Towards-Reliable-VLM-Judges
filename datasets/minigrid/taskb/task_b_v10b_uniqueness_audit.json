@@ -1,0 +1,26 @@
+{
+  "doorkey": {
+    "total": 24,
+    "unique": 24
+  },
+  "keycorridor": {
+    "total": 24,
+    "unique": 24
+  },
+  "lavagap": {
+    "total": 24,
+    "unique": 24
+  },
+  "memory": {
+    "total": 24,
+    "unique": 24
+  },
+  "multiroom": {
+    "total": 24,
+    "unique": 24
+  },
+  "redblue": {
+    "total": 24,
+    "unique": 24
+  }
+}

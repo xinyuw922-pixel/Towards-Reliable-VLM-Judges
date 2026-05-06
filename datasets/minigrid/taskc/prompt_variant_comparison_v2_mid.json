@@ -1,0 +1,6 @@
+{
+  "baseline": "Below is a storyboard from one MiniGrid trajectory.\nTask goal: find the key, unlock the door, and pick up the colored target ball behind the locked door.\nDid the trajectory satisfy this goal?\nAnswer with ONLY: Yes or No.",
+  "pos": "The agent seems to handle the task competently in the following trajectory. Below is a storyboard from one MiniGrid trajectory.\nTask goal: find the key, unlock the door, and pick up the colored target ball behind the locked door.\nDid the trajectory satisfy this goal?\nAnswer with ONLY: Yes or No.",
+  "neu": "The following trajectory is described in a neutral way. Below is a storyboard from one MiniGrid trajectory.\nTask goal: find the key, unlock the door, and pick up the colored target ball behind the locked door.\nDid the trajectory satisfy this goal?\nAnswer with ONLY: Yes or No.",
+  "neg": "The agent seems to struggle with the task in the following trajectory. Below is a storyboard from one MiniGrid trajectory.\nTask goal: find the key, unlock the door, and pick up the colored target ball behind the locked door.\nDid the trajectory satisfy this goal?\nAnswer with ONLY: Yes or No."
+}

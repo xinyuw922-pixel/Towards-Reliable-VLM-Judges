@@ -1,0 +1,4 @@
+paper_results/llava_raw_responses/**/*.jsonl filter=lfs diff=lfs merge=lfs -text
+FINAL/**/*.pdf filter=lfs diff=lfs merge=lfs -text
+FINAL/**/*.pdf.fixed filter=lfs diff=lfs merge=lfs -text
+FINAL/**/*.html filter=lfs diff=lfs merge=lfs -text

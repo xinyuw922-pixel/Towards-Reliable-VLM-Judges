@@ -1,0 +1,128 @@
+{
+  "schema_version": "gridwm.exam.v1",
+  "version": "v3_144_candidate",
+  "generator": "scripts/generate_task_d_v3_144.py",
+  "git_commit": "6fb9878e727a95c735d2dce283f346139127bf01",
+  "source_raw_root": "datasets/raw_data_taskb72",
+  "groups_per_env": 8,
+  "variants": [
+    "full",
+    "nocue",
+    "cf"
+  ],
+  "prompt_contract": "task_d_minimal_outcome_judgment",
+  "layout": {
+    "mode": "adaptive",
+    "min_cols": 4,
+    "max_cols": 8
+  },
+  "outputs": {
+    "task_d_exam": 144,
+    "images": 144
+  },
+  "stats": {
+    "envs": {
+      "doorkey": 24,
+      "keycorridor": 24,
+      "lavagap": 24,
+      "memory": 24,
+      "multiroom": 24,
+      "redblue": 24
+    },
+    "selected_groups": {
+      "doorkey": [
+        "doorkey_s000000",
+        "doorkey_s000001",
+        "doorkey_s000002",
+        "doorkey_s000003",
+        "doorkey_s000004",
+        "doorkey_s000005",
+        "doorkey_s000006",
+        "doorkey_s000007"
+      ],
+      "keycorridor": [
+        "keycorridor_s000000",
+        "keycorridor_s000001",
+        "keycorridor_s000002",
+        "keycorridor_s000003",
+        "keycorridor_s000004",
+        "keycorridor_s000005",
+        "keycorridor_s000006",
+        "keycorridor_s000007"
+      ],
+      "lavagap": [
+        "lavagap_s000000",
+        "lavagap_s000001",
+        "lavagap_s000002",
+        "lavagap_s000003",
+        "lavagap_s000004",
+        "lavagap_s000005",
+        "lavagap_s000006",
+        "lavagap_s000007"
+      ],
+      "memory": [
+        "memory_s000000",
+        "memory_s000001",
+        "memory_s000002",
+        "memory_s000003",
+        "memory_s000004",
+        "memory_s000005",
+        "memory_s000006",
+        "memory_s000007"
+      ],
+      "multiroom": [
+        "multiroom_s000000",
+        "multiroom_s000001",
+        "multiroom_s000002",
+        "multiroom_s000003",
+        "multiroom_s000004",
+        "multiroom_s000005",
+        "multiroom_s000006",
+        "multiroom_s000007"
+      ],
+      "redblue": [
+        "redblue_s000000",
+        "redblue_s000001",
+        "redblue_s000002",
+        "redblue_s000003",
+        "redblue_s000004",
+        "redblue_s000005",
+        "redblue_s000006",
+        "redblue_s000007"
+      ]
+    },
+    "skipped": {
+      "doorkey": 4,
+      "keycorridor": 4,
+      "lavagap": 4,
+      "memory": 4,
+      "multiroom": 4,
+      "redblue": 4
+    },
+    "made": 144,
+    "groups_per_env": 8
+  },
+  "qc": {
+    "total_rows": 144,
+    "uid_unique": true,
+    "all_images_exist": true,
+    "errors": [],
+    "env_counts": {
+      "doorkey": 24,
+      "keycorridor": 24,
+      "lavagap": 24,
+      "memory": 24,
+      "multiroom": 24,
+      "redblue": 24
+    },
+    "variant_counts": {
+      "full": 48,
+      "nocue": 48,
+      "cf": 48
+    },
+    "answer_counts": {
+      "Success": 96,
+      "Fail": 48
+    }
+  }
+}

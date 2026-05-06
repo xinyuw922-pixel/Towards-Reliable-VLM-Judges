@@ -1,0 +1,11 @@
+{
+  "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taskb",
+  "default_exam": "task_b_exam.jsonl",
+  "operational_exam": "task_b_exam_v71c_operational.jsonl",
+  "rows": 144,
+  "mode": "reanchored_dualstep_operational_v71c",
+  "source": "datasets/exams_taskb_v10b_144_reanchored_candidate/task_b_exam.jsonl",
+  "prompt_label": "v7.1c",
+  "max_tokens_B": 4096,
+  "note": "This is the current Task B 144 reanchored authority candidate. Operational running should use prompt v7.1c with max_tokens_B=4096 because v7.1c smoke passed cleanly while v7_legend smoke failed on length-driven parse collapse."
+}

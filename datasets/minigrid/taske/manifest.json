@@ -1,0 +1,80 @@
+{
+  "task": "E",
+  "version": "v1.3-candidate",
+  "source_phase": "58",
+  "promoted_envs": [
+    "unlockpickup",
+    "blockedunlockpickup"
+  ],
+  "summary": {
+    "n_rows": 325,
+    "by_env": {
+      "unlockpickup": 160,
+      "blockedunlockpickup": 165
+    },
+    "by_sampling_role": {
+      "identity_short": 48,
+      "identity_medium": 48,
+      "identity_long": 40,
+      "status_early_holding": 48,
+      "status_mid_holding": 45,
+      "status_first_post_drop": 48,
+      "status_late_post_drop": 48
+    },
+    "by_query_type": {
+      "identity_of_first_picked_object": 136,
+      "status_of_first_picked_object_at_checkpoint": 189
+    },
+    "by_horizon_bucket": {
+      "short": 165,
+      "medium": 80,
+      "long": 80
+    },
+    "by_env_role": {
+      "unlockpickup": {
+        "identity_short": 24,
+        "identity_medium": 24,
+        "identity_long": 16,
+        "status_early_holding": 24,
+        "status_mid_holding": 24,
+        "status_first_post_drop": 24,
+        "status_late_post_drop": 24
+      },
+      "blockedunlockpickup": {
+        "identity_short": 24,
+        "identity_medium": 24,
+        "identity_long": 24,
+        "status_early_holding": 24,
+        "status_mid_holding": 21,
+        "status_first_post_drop": 24,
+        "status_late_post_drop": 24
+      }
+    }
+  },
+  "build_stats": {
+    "unlockpickup": {
+      "row_identity_short": 24,
+      "row_identity_medium": 24,
+      "row_identity_long": 16,
+      "row_status_early_holding": 24,
+      "row_status_mid_holding": 24,
+      "row_status_first_post_drop": 24,
+      "row_status_late_post_drop": 24,
+      "no_candidate_identity_long": 8
+    },
+    "blockedunlockpickup": {
+      "row_identity_short": 24,
+      "row_identity_medium": 24,
+      "row_identity_long": 24,
+      "row_status_early_holding": 24,
+      "row_status_mid_holding": 21,
+      "row_status_first_post_drop": 24,
+      "row_status_late_post_drop": 24,
+      "status_not_holding_status_mid_holding": 3
+    }
+  },
+  "files": {
+    "exam": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taske/task_e_exam_v13.jsonl",
+    "human_audit_package": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taske/human_audit_package_v13.jsonl"
+  }
+}

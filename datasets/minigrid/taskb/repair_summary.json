@@ -1,0 +1,70 @@
+{
+  "schema": "taskb_repair_summary_v1",
+  "version": "v9_72_repaired",
+  "date": "2026-04-02",
+  "source_exam": "datasets/exams_taskb_v9_72_candidate/task_b_exam.jsonl",
+  "output_exam": "datasets/exams_taskb_v9_72_repaired_candidate/task_b_exam.jsonl",
+  "script": "scripts/rebuild_taskb_72_repaired.py",
+  "total_rows": 72,
+  "kept": 48,
+  "replaced": 24,
+  "reason": "Strategy B: automated uniqueness-first step assignment for lavagap + memory",
+  "lavagap": {
+    "blocked_count": 12,
+    "replaced_count": 12,
+    "unique_images": "12/12",
+    "strategy": "greedy per-hash-group step assignment, priority: non-dup > higher info_score > earlier t",
+    "info_score_distribution": {"3": 3, "2": 9},
+    "note": "3 hash-group HG1/HG2/HG3 forces mixing t=0..9 for uniqueness; 9 items degraded to info_score=2",
+    "assignments": {
+      "B.lavagap.lavagap_s000000.t8": "B.lavagap.lavagap_s000000.t9 (info=3)",
+      "B.lavagap.lavagap_s000001.t8": "B.lavagap.lavagap_s000001.t9 (info=3)",
+      "B.lavagap.lavagap_s000002.t8": "B.lavagap.lavagap_s000002.t9 (info=3)",
+      "B.lavagap.lavagap_s000003.t8": "B.lavagap.lavagap_s000003.t0 (info=2)",
+      "B.lavagap.lavagap_s000004.t8": "B.lavagap.lavagap_s000004.t1 (info=2)",
+      "B.lavagap.lavagap_s000005.t8": "B.lavagap.lavagap_s000005.t0 (info=2)",
+      "B.lavagap.lavagap_s000006.t8": "B.lavagap.lavagap_s000006.t0 (info=2)",
+      "B.lavagap.lavagap_s000007.t8": "B.lavagap.lavagap_s000007.t2 (info=2)",
+      "B.lavagap.lavagap_s000008.t8": "B.lavagap.lavagap_s000008.t3 (info=2)",
+      "B.lavagap.lavagap_s000009.t8": "B.lavagap.lavagap_s000009.t1 (info=2)",
+      "B.lavagap.lavagap_s000010.t8": "B.lavagap.lavagap_s000010.t5 (info=2)",
+      "B.lavagap.lavagap_s000011.t8": "B.lavagap.lavagap_s000011.t1 (info=2)"
+    }
+  },
+  "memory": {
+    "blocked_count": 12,
+    "replaced_count": 12,
+    "unique_images": "12/12",
+    "strategy": "greedy per-UID step assignment, priority: non-dup > higher info_score > earlier t",
+    "info_score_distribution": {"3": 2, "2": 10},
+    "assignments": {
+      "B.memory.memory_s000000.t2": "B.memory.memory_s000000.t4 (info=3)",
+      "B.memory.memory_s000001.t6": "B.memory.memory_s000001.t0 (info=2)",
+      "B.memory.memory_s000002.t2": "B.memory.memory_s000002.t4 (info=3)",
+      "B.memory.memory_s000003.t2": "B.memory.memory_s000003.t0 (info=2)",
+      "B.memory.memory_s000004.t3": "B.memory.memory_s000004.t0 (info=2)",
+      "B.memory.memory_s000005.t4": "B.memory.memory_s000005.t0 (info=2)",
+      "B.memory.memory_s000006.t6": "B.memory.memory_s000006.t1 (info=2)",
+      "B.memory.memory_s000007.t1": "B.memory.memory_s000007.t0 (info=2)",
+      "B.memory.memory_s000008.t3": "B.memory.memory_s000008.t0 (info=2)",
+      "B.memory.memory_s000009.t6": "B.memory.memory_s000009.t2 (info=2)",
+      "B.memory.memory_s000010.t3": "B.memory.memory_s000010.t2 (info=2)",
+      "B.memory.memory_s000011.t9": "B.memory.memory_s000011.t7 (info=2)"
+    }
+  },
+  "kept_items": {
+    "doorkey": 12,
+    "keycorridor": 12,
+    "multiroom": 12,
+    "redblue": 12
+  },
+  "image_uniqueness_audit": {
+    "doorkey": "6/12 unique (3 collision pairs — each pair human-differentiable by object positions)",
+    "keycorridor": "12/12 unique",
+    "lavagap": "12/12 unique (FIXED)",
+    "memory": "12/12 unique (FIXED)",
+    "multiroom": "12/12 unique",
+    "redblue": "12/12 unique"
+  },
+  "answer_consistency": "All 72 rows: answer field matches answer_json"
+}

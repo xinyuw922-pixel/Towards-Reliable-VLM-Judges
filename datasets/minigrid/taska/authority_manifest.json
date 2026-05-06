@@ -1,0 +1,8 @@
+{
+  "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taska",
+  "default_exam": "task_a_exam.jsonl",
+  "rows": 103,
+  "mode": "authoritative_copy",
+  "source": "datasets/exams_pathb/task_a_exam.jsonl",
+  "note": "Current build_exam.py no longer reproduces the historical 103-row canonical artifact; a fresh regen on 2026-04-03 produced 208 rows, so this package keeps the frozen 103-row authority copy."
+}

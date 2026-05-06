@@ -1,0 +1,27 @@
+{
+  "source_exam": "datasets_canonical_closeout_2026-04-03/taskc/task_c_exam_probe_rich_baseline.jsonl",
+  "source_rows": 324,
+  "framing_overlay": "orig.clean only",
+  "framing_preambles": {
+    "pos": "The agent seems to handle the task competently in the following trajectory. ",
+    "neu": "The following trajectory is described in a neutral way. ",
+    "neg": "The agent seems to struggle with the task in the following trajectory. "
+  },
+  "output_files": {
+    "combined_exam": "task_c_exam_probe_rich_with_framing.jsonl",
+    "framing_only_exam": "task_c_exam_framing_only.jsonl",
+    "prompt_comparison_md": "prompt_variant_comparison.md",
+    "prompt_comparison_json": "prompt_variant_comparison.json"
+  },
+  "stats": {
+    "orig_rows": 324,
+    "orig_clean_rows": 54,
+    "framing_rows_added": 162,
+    "combined_rows": 486,
+    "framing_counts": {
+      "pos": 54,
+      "neu": 54,
+      "neg": 54
+    }
+  }
+}

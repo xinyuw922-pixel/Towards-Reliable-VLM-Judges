@@ -1,0 +1,64 @@
+{
+  "root": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03",
+  "version": "canonical_closeout_2026-04-03",
+  "rules": {
+    "one_task_one_subdir": true,
+    "future_full_runs_must_use_this_root": true,
+    "legacy_datasets_are_historical_only": true
+  },
+  "tasks": {
+    "A": {
+      "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taska",
+      "default_exam": "task_a_exam.jsonl",
+      "rows": 103,
+      "mode": "authoritative_copy",
+      "source": "datasets/exams_pathb/task_a_exam.jsonl",
+      "note": "Current build_exam.py no longer reproduces the historical 103-row canonical artifact; a fresh regen on 2026-04-03 produced 208 rows, so this package keeps the frozen 103-row authority copy."
+    },
+    "B": {
+      "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taskb",
+      "default_exam": "task_b_exam.jsonl",
+      "operational_exam": "task_b_exam_v71c_operational.jsonl",
+      "rows": 144,
+      "mode": "reanchored_dualstep_operational_v71c",
+      "source": "datasets/exams_taskb_v10b_144_reanchored_candidate/task_b_exam.jsonl",
+      "prompt_label": "v7.1c",
+      "max_tokens_B": 4096,
+      "note": "Task B uses the 144-row reanchored candidate. Operational running should use prompt v7.1c with max_tokens_B=4096 because v7.1c smoke passed cleanly while v7_legend smoke failed on length-driven parse collapse."
+    },
+    "C": {
+      "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taskc",
+      "default_exam": "task_c_exam.jsonl",
+      "rows": 486,
+      "mode": "probe_rich_subset_with_framing_v2_mid_authority",
+      "source": "datasets/exams_taskc_probe_rich_subset_with_framing_candidate/task_c_exam_probe_rich_with_framing.jsonl",
+      "note": "Default runnable Task C exam is the later 3-env probe-rich subset authority with framing v2-mid added on the orig.clean slice. The older 324-row probe-rich baseline remains available locally as task_c_exam_probe_rich_baseline.jsonl, and the older 6-env Path-B artifact is preserved as task_c_exam_legacy_pathb.jsonl."
+    },
+    "D": {
+      "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taskd-r",
+      "default_exam": "task_d_exam.jsonl",
+      "rows": 144,
+      "mode": "reference_aided_mainline_expanded_v2",
+      "source": "datasets_canonical_closeout_2026-04-03/taskd/task_d_exam.jsonl",
+      "source_script": "scripts/generate_task_d_r_audit.py",
+      "note": "Task D mainline authority uses the expanded reference-aided D-R format. The current 144-row package adds nocue queries, style visual probes, and framing variants (neu/pos/neg on clean) on top of the reference-aided setup, while preserving one fixed known-success reference trajectory per environment."
+    },
+    "D-legacy": {
+      "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taskd",
+      "default_exam": "task_d_exam.jsonl",
+      "rows": 144,
+      "mode": "legacy_direct_taskd_demoted",
+      "source": "datasets/exams_taskd_v3_144_candidate/task_d_exam.jsonl",
+      "source_script": "scripts/generate_task_d_v3_144.py",
+      "note": "This is the earlier direct-judgment Task D package. It is retained for historical comparison and ablation, but it is no longer the mainline Task D authority after D-R promotion."
+    },
+    "E": {
+      "exam_dir": "/home/wxy/GridWM-Judge/datasets_canonical_closeout_2026-04-03/taske",
+      "default_exam": "task_e_exam_v13.jsonl",
+      "rows": 325,
+      "mode": "regenerated",
+      "source_script": "scripts/build_exam_task_e_v13_candidate.py",
+      "note": "Current Task E main candidate. Auxiliary slices such as strengthening, mandatory, and balanced_minismoke are intentionally excluded from the default full-run package."
+    }
+  }
+}
