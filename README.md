@@ -265,6 +265,3 @@ A: Both scripts auto-align via UID (`exam_id` field). Ensure both response files
 
 ---
 
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.# Towards-Reliable-VLM-Judges
