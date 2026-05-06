@@ -1,4 +1,4 @@
-# Towards-Reliable-VLM-Judges
+# Towards Reliable VLM Judges: State-Conditional Invariance and Presentation-Aware Diagnostics
 
 Evaluating Vision-Language Models (VLMs) on causal reasoning tasks in grid worlds (MiniGrid) and 3D environments (MiniWorld).
 
@@ -267,8 +267,4 @@ A: Both scripts auto-align via UID (`exam_id` field). Ensure both response files
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-# Towards-Reliable-VLM-Judges
-# Towards-Reliable-VLM-Judges
-# Towards-Reliable-VLM-Judges
-# Towards-Reliable-VLM-Judges
+MIT License - see [LICENSE](LICENSE) for details.# Towards-Reliable-VLM-Judges
