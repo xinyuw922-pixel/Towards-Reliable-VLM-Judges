@@ -82,15 +82,13 @@ datasets/
 │   ├── taskc/task_c_exam.jsonl  # Task C (trajectory)
 │   └── taskd/task_d_exam.jsonl  # Task D (generalization)
 ├── global_views/                # Raw trajectory data
-│   ├── doorkey/
-│   ├── keycorridor/
-│   ├── memory/
-│   ├── multiroom/
-│   ├── redblue/
-│   └── lavagap/
-└── miniworld/                   # MiniWorld evaluation data
+    ├── doorkey/
+    ├── keycorridor/
+    ├── memory/
+    ├── multiroom/
+    ├── redblue/
+    └── lavagap/
 ```
-
 ---
 
 ## Usage
@@ -197,16 +195,28 @@ python scripts/score/compute_les.py \
 ## Project Structure
 
 ```
-Towards-Reliable-VLM-Judges/
+GridWM-Judge/
 ├── datasets/
 │   ├── minigrid/            # MiniGrid exam data
+│   │   ├── taska/           # Task A: next state prediction
+│   │   ├── taskb/           # Task B: perception & spatial reasoning
+│   │   ├── taskc/           # Task C: trajectory outcome
+│   │   ├── taskd/           # Task D: cross-environment generalization
+│   │   └── taske/           # Task E: complex reasoning chains
 │   ├── miniworld/           # MiniWorld exam data
 │   └── global_views/        # Raw trajectory data
+│       ├── doorkey/
+│       ├── keycorridor/
+│       ├── memory/
+│       ├── multiroom/
+│       ├── redblue/
+│       └── lavagap/
 ├── scripts/
 │   ├── run_full_pipeline.sh # One-click evaluation
 │   ├── build/               # Exam generation
 │   │   ├── build_exam.py
-│   │   └── split_taskA_frames.py
+│   │   ├── split_taskA_frames.py
+│   │   └── gen_action_ablation.py
 │   ├── infer/              # VLM inference
 │   │   ├── run_inference.py
 │   │   └── run_canonical_pipeline.py
@@ -214,9 +224,20 @@ Towards-Reliable-VLM-Judges/
 │   │   ├── score_exam.py
 │   │   ├── compute_idr.py
 │   │   ├── compute_les.py
-│   │   └── compute_vcc_oracle.py
-│   └── schema/             # Shared utilities
-└── outputs/                 # Generated exams & results
+│   │   ├── compute_vcc_oracle.py
+│   │   └── score_action_ablation.py
+│   ├── miniworld/          # MiniWorld environment scripts
+│   │   ├── gen_*.py        # Task generation scripts
+│   │   ├── build_*_requests.py
+│   │   ├── score_*_inference.py
+│   │   └── render_*_pdf.py
+│   ├── export/              # Results export
+│   ├── datasets/            # Dataset utilities
+│   ├── schema/              # Shared utilities
+│   └── utils/               # Helper scripts
+├── outputs/                  # Generated exams & results
+├── config.py                 # Configuration
+└── LICENSE
 ```
 
 ---
@@ -264,4 +285,3 @@ A: Verify the response JSONL contains temporal/visual probe data and `--per-row-
 A: Both scripts auto-align via UID (`exam_id` field). Ensure both response files exist.
 
 ---
-
