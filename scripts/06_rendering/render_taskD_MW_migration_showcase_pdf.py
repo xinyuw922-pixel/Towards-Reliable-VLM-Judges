@@ -22,33 +22,33 @@ PAGE_W = 2000
 PAGE_H = 2828
 MARGIN = 90
 
-FAMILY_ZH = {
-    "doorkey": "DoorKey / 钥匙开门",
-    "multiroom": "MultiRoom / 多房间",
-    "redblue": "RedBlue / 红蓝门",
+FAMILY_NAMES = {
+    "doorkey": "DoorKey",
+    "multiroom": "MultiRoom",
+    "redblue": "RedBlue",
 }
 
-DIFFICULTY_ZH = {
-    "easy": "简单",
-    "medium": "中等",
-    "hard": "困难",
+DIFFICULTY_NAMES = {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
 }
 
-NOTE_ZH = {
-    "migration_doorkey_canonical": "规则不变：拿钥匙，开黄门，到达红色目标。",
-    "migration_doorkey_medium": "规则不变：目标更远，并加入少量视觉干扰。",
-    "migration_doorkey_hard": "规则不变：事件跨度更长，门后路径更远，干扰更多。",
-    "migration_multiroom_canonical": "规则不变：穿过两扇顺序门，最终到达目标。",
-    "migration_multiroom_medium": "规则不变：走廊更长，两次开门之间的间隔更大。",
-    "migration_multiroom_hard": "规则不变：链路更长，目标更远，并加入额外干扰。",
-    "migration_redblue_canonical": "规则不变：必须先开红门，再开蓝门。",
-    "migration_redblue_medium": "规则不变：红门与蓝门之间的间隔更大。",
-    "migration_redblue_hard": "规则不变：顺序约束相同，但时距更长、干扰更多。",
+NOTE_DESCRIPTIONS = {
+    "migration_doorkey_canonical": "Rules unchanged: pick up key, open yellow door, reach red goal.",
+    "migration_doorkey_medium": "Rules unchanged: goal is farther, with light visual distractions.",
+    "migration_doorkey_hard": "Rules unchanged: longer event span, farther post-door path, more distractions.",
+    "migration_multiroom_canonical": "Rules unchanged: pass through two sequential doors, reach goal.",
+    "migration_multiroom_medium": "Rules unchanged: longer corridors, larger interval between two door opens.",
+    "migration_multiroom_hard": "Rules unchanged: longer chain, farther goal, additional distractions.",
+    "migration_redblue_canonical": "Rules unchanged: must open red door first, then blue door.",
+    "migration_redblue_medium": "Rules unchanged: larger interval between red and blue doors.",
+    "migration_redblue_hard": "Rules unchanged: same sequence constraint, longer duration, more distractions.",
 }
 
-INTERVENTION_ZH = {
-    "remove_key": "移除钥匙",
-    "lock_gate2_forever": "第二扇门永久锁定",
+INTERVENTION_NAMES = {
+    "remove_key": "Remove key",
+    "lock_gate2_forever": "Second door permanently locked",
 }
 
 
@@ -124,16 +124,16 @@ def load_summary(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def zh_family(family: str) -> str:
-    return FAMILY_ZH.get(family, family)
+def get_family_name(family: str) -> str:
+    return FAMILY_NAMES.get(family, family)
 
 
-def zh_difficulty(difficulty: str) -> str:
-    return DIFFICULTY_ZH.get(difficulty, difficulty)
+def get_difficulty_name(difficulty: str) -> str:
+    return DIFFICULTY_NAMES.get(difficulty, difficulty)
 
 
-def zh_note(row: dict[str, Any]) -> str:
-    return NOTE_ZH.get(row["template_id"], row.get("note", ""))
+def get_note_description(row: dict[str, Any]) -> str:
+    return NOTE_DESCRIPTIONS.get(row["template_id"], row.get("note", ""))
 
 
 def build_cover(rows: list[dict[str, Any]], mode: str, summary_path: Path) -> Image.Image:
@@ -142,23 +142,23 @@ def build_cover(rows: list[dict[str, Any]], mode: str, summary_path: Path) -> Im
     sub_font = load_font(42)
     body_font = load_font(34)
 
-    draw.text((MARGIN, 120), "MiniWorld Task D 迁移环境试卷", font=title_font, fill=(0, 0, 0))
-    mode_label = "盲审版" if mode == "blind" else "答案版"
+    draw.text((MARGIN, 120), "MiniWorld Task D Migration Environment Exam Pack", font=title_font, fill=(0, 0, 0))
+    mode_label = "Blind Review Version" if mode == "blind" else "Answer Key Version"
     draw.text((MARGIN, 230), mode_label, font=sub_font, fill=(0, 0, 0))
 
     y = 340
     lines = [
-        f"数据索引：{summary_path}",
-        f"题目总数：{len(rows)}",
+        f"Data index: {summary_path}",
+        f"Total items: {len(rows)}",
         "",
-        "本试卷按 MiniGrid -> MiniWorld 的三类迁移环境组织：",
-        "DoorKey、MultiRoom、RedBlue；每类环境均包含 简单 / 中等 / 困难 三档模板。",
+        "This exam pack is organized by three migration environments from MiniGrid to MiniWorld:",
+        "DoorKey, MultiRoom, RedBlue; each environment includes Easy / Medium / Hard templates.",
         "",
-        "盲审版说明：",
-        "每页仅展示一条 full storyboard 轨迹与中文题面，不显示答案。",
+        "Blind review version:",
+        "Each page shows only one full storyboard trajectory with question text, without answers.",
         "",
-        "答案版说明：",
-        "每页展示 full storyboard、cf storyboard、事件覆盖图与关键元数据。",
+        "Answer key version:",
+        "Each page shows full storyboard, cf storyboard, event coverage visualization and key metadata.",
     ]
     y = add_wrapped_text(draw, MARGIN, y, "\n".join(lines), body_font, PAGE_W - 2 * MARGIN, 48)
 
@@ -166,10 +166,10 @@ def build_cover(rows: list[dict[str, Any]], mode: str, summary_path: Path) -> Im
     for family in ("doorkey", "multiroom", "redblue"):
         family_rows = [r for r in rows if r["family"] == family]
         templates = ", ".join(
-            f"{zh_difficulty(str(r['layout_metadata'].get('difficulty', '')))} = {r['template_id']}"
+            f"{get_difficulty_name(str(r['layout_metadata'].get('difficulty', '')))} = {r['template_id']}"
             for r in family_rows
         )
-        y = add_wrapped_text(draw, MARGIN, y, f"{zh_family(family)}：{templates}", body_font, PAGE_W - 2 * MARGIN, 44)
+        y = add_wrapped_text(draw, MARGIN, y, f"{get_family_name(family)}: {templates}", body_font, PAGE_W - 2 * MARGIN, 44)
         y += 12
 
     return page
@@ -178,28 +178,28 @@ def build_cover(rows: list[dict[str, Any]], mode: str, summary_path: Path) -> Im
 def build_prompt_block(row: dict[str, Any], *, blind: bool) -> str:
     family = row["family"]
     difficulty = row["layout_metadata"].get("difficulty", "unknown")
-    note = zh_note(row)
+    note = get_note_description(row)
     seq_rel = row["manifest_relpath"]
     prompt = [
-        f"环境家族：{zh_family(family)}",
-        f"难度：{zh_difficulty(str(difficulty))}",
-        f"模板名：{row['template_id']}",
-        f"说明：{note}",
+        f"Environment family: {get_family_name(family)}",
+        f"Difficulty: {get_difficulty_name(str(difficulty))}",
+        f"Template name: {row['template_id']}",
+        f"Description: {note}",
         "",
-        "题目：",
-        "判断这条 storyboard 连续轨迹是否成功完成任务。",
-        "作答要求：只输出一个英文单词：SUCCESS 或 FAIL。",
+        "Question:",
+        "Determine whether this storyboard trajectory successfully completes the task.",
+        "Answer requirement: Output only one English word: SUCCESS or FAIL.",
     ]
     if not blind:
         prompt.extend(
             [
                 "",
-                f"full 是否成功 = {row['full_success']}",
-                f"cf 是否成功 = {row['cf_success']}",
-                f"cf 干预方式 = {INTERVENTION_ZH.get(row['cf_intervention'], row['cf_intervention'])}",
-                f"full 事件步 = {row['full_event_steps']}",
-                f"cf 事件步 = {row['cf_event_steps']}",
-                f"manifest 路径 = {seq_rel}",
+                f"full success = {row['full_success']}",
+                f"cf success = {row['cf_success']}",
+                f"cf intervention = {INTERVENTION_NAMES.get(row['cf_intervention'], row['cf_intervention'])}",
+                f"full event steps = {row['full_event_steps']}",
+                f"cf event steps = {row['cf_event_steps']}",
+                f"manifest path = {seq_rel}",
             ]
         )
     return "\n".join(prompt)
@@ -214,7 +214,7 @@ def build_row_page(row: dict[str, Any], *, root: Path, mode: str) -> Image.Image
 
     family = row["family"]
     difficulty = row["layout_metadata"].get("difficulty", "unknown")
-    title = f"{zh_family(family)} / {zh_difficulty(str(difficulty))} / {row['template_id']}"
+    title = f"{get_family_name(family)} / {get_difficulty_name(str(difficulty))} / {row['template_id']}"
     draw.text((MARGIN, 70), title, font=title_font, fill=(0, 0, 0))
 
     prompt_x = MARGIN
@@ -232,10 +232,10 @@ def build_row_page(row: dict[str, Any], *, root: Path, mode: str) -> Image.Image
     full_target_h = 1040 if blind else 760
     full_fit = fit_contain(full_img, right_w, full_target_h)
     page.paste(full_fit, (right_x, 150))
-    draw.text((right_x, 118), "Full 轨迹图", font=body_font, fill=(0, 0, 0))
+    draw.text((right_x, 118), "Full Trajectory", font=body_font, fill=(0, 0, 0))
 
     if blind:
-        meta = f"环境={zh_family(family)} | 难度={zh_difficulty(str(difficulty))} | 答案隐藏"
+        meta = f"Family={get_family_name(family)} | Difficulty={get_difficulty_name(str(difficulty))} | Answer hidden"
         draw.text((right_x, 1220), meta, font=small_font, fill=(70, 70, 70))
         return page
 
@@ -247,17 +247,17 @@ def build_row_page(row: dict[str, Any], *, root: Path, mode: str) -> Image.Image
         event_img = Image.open(root / event_cov_path).convert("RGB")
         event_fit = fit_contain(event_img, right_w // 2 - 20, 620)
     page.paste(cf_fit, (right_x, 980))
-    draw.text((right_x, 948), "CF 轨迹图", font=body_font, fill=(0, 0, 0))
+    draw.text((right_x, 948), "CF Trajectory", font=body_font, fill=(0, 0, 0))
     if event_fit is not None:
         x2 = right_x + right_w // 2 + 20
         page.paste(event_fit, (x2, 980))
-        draw.text((x2, 948), "关键事件覆盖图", font=body_font, fill=(0, 0, 0))
+        draw.text((x2, 948), "Event Coverage Map", font=body_font, fill=(0, 0, 0))
 
     meta_lines = [
-        f"配对是否合格 = {row['pair_ok']}",
-        f"CF 干预方式 = {INTERVENTION_ZH.get(row['cf_intervention'], row['cf_intervention'])}",
-        f"full 事件步 = {row['full_event_steps']}",
-        f"cf 事件步 = {row['cf_event_steps']}",
+        f"Pair valid = {row['pair_ok']}",
+        f"CF intervention = {INTERVENTION_NAMES.get(row['cf_intervention'], row['cf_intervention'])}",
+        f"Full event steps = {row['full_event_steps']}",
+        f"CF event steps = {row['cf_event_steps']}",
     ]
     add_wrapped_text(draw, right_x, 1660, "\n".join(meta_lines), small_font, right_w, 36, fill=(70, 70, 70))
     return page
@@ -291,7 +291,7 @@ def main() -> None:
         pages.append(build_row_page(row, root=root, mode=args.mode))
 
     if args.out_pdf is None:
-        suffix = "blind_zh" if args.mode == "blind" else "answer_key_zh"
+        suffix = "blind" if args.mode == "blind" else "answer_key"
         out_pdf = root / f"taskD_MW_migration_showcase_{suffix}.pdf"
     else:
         out_pdf = Path(args.out_pdf)

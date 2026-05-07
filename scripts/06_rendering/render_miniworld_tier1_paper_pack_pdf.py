@@ -17,7 +17,7 @@ from matplotlib.font_manager import FontProperties
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_SUMMARY = ROOT / "tmp_miniworld" / "miniworld-tier1-paper-pack" / "miniworld_tier1_results_summary.json"
-DEFAULT_OUT = ROOT / "tmp_miniworld" / "miniworld-tier1-paper-pack" / "miniworld_tier1_review_zh.pdf"
+DEFAULT_OUT = ROOT / "tmp_miniworld" / "miniworld-tier1-paper-pack" / "miniworld_tier1_review.pdf"
 DEFAULT_FIG_DIR = ROOT / "tmp_miniworld" / "miniworld-tier1-paper-pack" / "figures"
 FONT_PATHS = [
     Path("/mnt/c/Windows/Fonts/msyh.ttc"),
@@ -56,15 +56,15 @@ def add_cover(pdf: PdfPages) -> None:
     ax = fig.add_axes([0, 0, 1, 1])
     ax.axis("off")
     ax.text(0.06, 0.88, "MiniWorld Tier-1 Paper Pack Review", fontsize=26, fontweight="bold", fontproperties=font)
-    ax.text(0.06, 0.82, "双模型结果审阅包", fontsize=18, fontproperties=font)
+    ax.text(0.06, 0.82, "Dual-Model Results Review Pack", fontsize=18, fontproperties=font)
     ax.text(
         0.06,
         0.70,
-        "内容包含：\n"
-        "1. 双模型总览表\n"
-        "2. A / D / D-framing / C / C-framing 分表\n"
-        "3. 6 张双模型对比图\n"
-        "4. 一页论文结果总结",
+        "Contents:\n"
+        "1. Dual-model overview table\n"
+        "2. A / D / D-framing / C / C-framing breakdown tables\n"
+        "3. 6 dual-model comparison figures\n"
+        "4. Paper results summary",
         fontsize=16,
         fontproperties=font,
         linespacing=1.8,
@@ -72,8 +72,8 @@ def add_cover(pdf: PdfPages) -> None:
     ax.text(
         0.06,
         0.28,
-        "模型：GPT-5.4 vs Gemini-2.5-Flash\n"
-        "用途：论文表格草稿与图表观感审阅",
+        "Models: GPT-5.4 vs Gemini-2.5-Flash\n"
+        "Purpose: Paper table draft and chart review",
         fontsize=14,
         fontproperties=font,
         color="#444444",
@@ -194,7 +194,7 @@ def main() -> None:
         add_cover(pdf)
         add_table_page(
             pdf,
-            "Table 1. MiniWorld Tier-1 双模型总表",
+            "Table 1. MiniWorld Tier-1 Dual-Model Overview",
             ["Line", "Task type", "n", "GPT-5.4", "Gemini-2.5-Flash"],
             [
                 ["A-MW-v2-crossenv", "successor prediction", str(a_gpt["overall"]["n"]), pct(a_gpt["overall"]["accuracy"]), pct(a_gem["overall"]["accuracy"])],
@@ -203,80 +203,80 @@ def main() -> None:
                 ["C-MW-formal", "sparse keyframe judgment", str(c_gpt["overall"]["n"]), pct(c_gpt["overall"]["accuracy"]), pct(c_gem["overall"]["accuracy"])],
                 ["C-MW-framing-full", "prompt framing probe", str(cf_gpt["overall"]["n"]), pct(cf_gpt["overall"]["accuracy"]), pct(cf_gem["overall"]["accuracy"])],
             ],
-            "这页适合看整体 headline：A 和 D 是主结果；D-framing 与 C-framing 用来判断 wording sensitivity 是否跨任务复现。",
+            "This page is good for overall headlines: A and D are main results; D-framing and C-framing are used to check if wording sensitivity replicates across tasks.",
         )
         add_table_page(
             pdf,
-            "Table 2. A-MW-v2-crossenv 按环境",
+            "Table 2. A-MW-v2-crossenv by Environment",
             ["Environment", "n", "GPT-5.4", "Gemini-2.5-Flash"],
             [
                 ["fourrooms", str(a_gpt["breakdowns"]["by_env"]["fourrooms"]["n"]), pct(a_gpt["breakdowns"]["by_env"]["fourrooms"]["accuracy"]), pct(a_gem["breakdowns"]["by_env"]["fourrooms"]["accuracy"])],
                 ["pickupobjects", str(a_gpt["breakdowns"]["by_env"]["pickupobjects"]["n"]), pct(a_gpt["breakdowns"]["by_env"]["pickupobjects"]["accuracy"]), pct(a_gem["breakdowns"]["by_env"]["pickupobjects"]["accuracy"])],
                 ["putnext", str(a_gpt["breakdowns"]["by_env"]["putnext"]["n"]), pct(a_gpt["breakdowns"]["by_env"]["putnext"]["accuracy"]), pct(a_gem["breakdowns"]["by_env"]["putnext"]["accuracy"])],
             ],
-            "Gemini 在 FourRooms 上明显更弱，但在 PickupObjects / PutNext 上和 GPT-5.4 持平。",
+            "Gemini is significantly weaker on FourRooms, but on par with GPT-5.4 on PickupObjects and PutNext.",
         )
         add_table_page(
             pdf,
-            "Table 3. D-MW 按 family",
+            "Table 3. D-MW by Family",
             ["Family", "n", "GPT-5.4", "Gemini-2.5-Flash"],
             [
                 ["doorkey", str(d_gpt["breakdowns"]["by_family"]["doorkey"]["n"]), pct(acc(d_gpt["breakdowns"]["by_family"]["doorkey"])), pct(acc(d_gem["breakdowns"]["by_family"]["doorkey"]))],
                 ["multiroom", str(d_gpt["breakdowns"]["by_family"]["multiroom"]["n"]), pct(acc(d_gpt["breakdowns"]["by_family"]["multiroom"])), pct(acc(d_gem["breakdowns"]["by_family"]["multiroom"]))],
                 ["redblue", str(d_gpt["breakdowns"]["by_family"]["redblue"]["n"]), pct(acc(d_gpt["breakdowns"]["by_family"]["redblue"])), pct(acc(d_gem["breakdowns"]["by_family"]["redblue"]))],
             ],
-            "这页最能看出 family-level 结构差异：GPT-5.4 更强于 DoorKey，而 Gemini 在 RedBlue 上反而更强。",
+            "This page best shows family-level structural differences: GPT-5.4 is stronger on DoorKey, while Gemini is actually stronger on RedBlue.",
         )
         add_table_page(
             pdf,
-            "Table 4. D-MW framing sensitivity",
+            "Table 4. D-MW Framing Sensitivity",
             ["Framing", "n", "GPT-5.4", "Gemini-2.5-Flash"],
             [
                 ["pos", str(df_gpt["breakdowns"]["by_framing"]["pos"]["n"]), pct(acc(df_gpt["breakdowns"]["by_framing"]["pos"])), pct(acc(df_gem["breakdowns"]["by_framing"]["pos"]))],
                 ["neu", str(df_gpt["breakdowns"]["by_framing"]["neu"]["n"]), pct(acc(df_gpt["breakdowns"]["by_framing"]["neu"])), pct(acc(df_gem["breakdowns"]["by_framing"]["neu"]))],
                 ["neg", str(df_gpt["breakdowns"]["by_framing"]["neg"]["n"]), pct(acc(df_gpt["breakdowns"]["by_framing"]["neg"])), pct(acc(df_gem["breakdowns"]["by_framing"]["neg"]))],
             ],
-            "如果 D 线上也出现同方向 framing effect，就说明 wording sensitivity 不是 Task C 的特例。",
+            "If the same direction framing effect appears on the D track, it shows that wording sensitivity is not unique to Task C.",
         )
         add_table_page(
             pdf,
-            "Table 5. C-MW-formal 按 variant",
+            "Table 5. C-MW-formal by Variant",
             ["Variant", "n", "GPT-5.4", "Gemini-2.5-Flash"],
             [
                 ["full", str(c_gpt["breakdowns"]["by_variant"]["full"]["n"]), pct(acc(c_gpt["breakdowns"]["by_variant"]["full"])), pct(acc(c_gem["breakdowns"]["by_variant"]["full"]))],
                 ["nocue", str(c_gpt["breakdowns"]["by_variant"]["nocue"]["n"]), pct(acc(c_gpt["breakdowns"]["by_variant"]["nocue"])), pct(acc(c_gem["breakdowns"]["by_variant"]["nocue"]))],
                 ["cf", str(c_gpt["breakdowns"]["by_variant"]["cf"]["n"]), pct(acc(c_gpt["breakdowns"]["by_variant"]["cf"])), pct(acc(c_gem["breakdowns"]["by_variant"]["cf"]))],
             ],
-            "GPT-5.4 明显偏向失败判断，而 Gemini 在 full / nocue 上更平衡。",
+            "GPT-5.4 clearly biases toward failure judgments, while Gemini is more balanced on full/nocue.",
         )
         add_table_page(
             pdf,
-            "Table 6. C-MW framing sensitivity",
+            "Table 6. C-MW Framing Sensitivity",
             ["Framing", "n", "GPT-5.4", "Gemini-2.5-Flash"],
             [
                 ["pos", str(cf_gpt["breakdowns"]["by_framing"]["pos"]["n"]), pct(acc(cf_gpt["breakdowns"]["by_framing"]["pos"])), pct(acc(cf_gem["breakdowns"]["by_framing"]["pos"]))],
                 ["neu", str(cf_gpt["breakdowns"]["by_framing"]["neu"]["n"]), pct(acc(cf_gpt["breakdowns"]["by_framing"]["neu"])), pct(acc(cf_gem["breakdowns"]["by_framing"]["neu"]))],
                 ["neg", str(cf_gpt["breakdowns"]["by_framing"]["neg"]["n"]), pct(acc(cf_gpt["breakdowns"]["by_framing"]["neg"])), pct(acc(cf_gem["breakdowns"]["by_framing"]["neg"]))],
             ],
-            "两模型都保留了同方向 framing effect：positive 更高，negative 更低。",
+            "Both models preserve the same-direction framing effect: higher for positive, lower for negative.",
         )
 
-        add_figure_page(pdf, "Figure 1. MiniWorld Tier-1 双模型总览", fig_dir / "figure_mw_tier1_dual_model_overview.png")
+        add_figure_page(pdf, "Figure 1. MiniWorld Tier-1 Dual-Model Overview", fig_dir / "figure_mw_tier1_dual_model_overview.png")
         add_figure_page(pdf, "Figure 2. A-MW-v2-crossenv", fig_dir / "figure_a_mw_crossenv_accuracy.png")
-        add_figure_page(pdf, "Figure 3. D-MW family 对比", fig_dir / "figure_d_mw_family_accuracy.png")
-        add_figure_page(pdf, "Figure 4. D-MW framing 对比", fig_dir / "figure_d_mw_framing_accuracy.png")
-        add_figure_page(pdf, "Figure 5. C-MW-formal variant 对比", fig_dir / "figure_c_mw_variant_accuracy.png")
-        add_figure_page(pdf, "Figure 6. C-MW framing 对比", fig_dir / "figure_c_mw_framing_accuracy.png")
+        add_figure_page(pdf, "Figure 3. D-MW Family Comparison", fig_dir / "figure_d_mw_family_accuracy.png")
+        add_figure_page(pdf, "Figure 4. D-MW Framing Comparison", fig_dir / "figure_d_mw_framing_accuracy.png")
+        add_figure_page(pdf, "Figure 5. C-MW-formal Variant Comparison", fig_dir / "figure_c_mw_variant_accuracy.png")
+        add_figure_page(pdf, "Figure 6. C-MW Framing Comparison", fig_dir / "figure_c_mw_framing_accuracy.png")
 
         add_text_page(
             pdf,
             "Paper-Facing Result Summary",
             [
-                "双模型版本比之前的单模型图更有说服力，因为它不再只展示一个数字，而是展示哪些模式能跨模型复现、哪些模式具有明显的模型依赖性。",
-                "A-MW-v2-crossenv 现在最重要的信息不是 60.0% 这个单点结果，而是 GPT-5.4 与 Gemini-2.5-Flash 在 FourRooms 上出现了显著分歧，但在 PickupObjects 与 PutNext 上又重新对齐。这让 A 线从“一个普通条形图”变成了更有解释力的 cross-env 对照。",
-                "D-MW-reference-family-exam50 仍然是最强的 MiniWorld headline 线。两模型总分接近，但 family 结构不同：GPT-5.4 更强于 DoorKey，Gemini 更强于 RedBlue。这种差异使 family-level 图更值得进论文。",
-                "新增的 D-MW full framing 结果可以回答一个更强的问题：prompt wording 的影响是不是只出现在 C 这种稀疏关键帧任务里。如果 D 上也出现同方向变化，这个结论就更有说服力。",
-                "C-MW-formal 与 C-MW full framing 则共同构成分析证据。C-formal 说明 sparse-keyframe judgment 的误差模式并不统一，而 full framing 进一步表明 prompt wording 的方向性影响在两模型和全量题库上都能复现。",
+                "The dual-model version is more convincing than the previous single-model chart because it no longer just shows one number, but shows which patterns replicate across models and which have clear model dependency.",
+                "The most important information from A-MW-v2-crossenv is not the 60.0% single point, but the significant divergence between GPT-5.4 and Gemini-2.5-Flash on FourRooms, while they realign on PickupObjects and PutNext. This transforms the A track from 'a regular bar chart' into a more explanatory cross-env comparison.",
+                "D-MW-reference-family-exam50 remains the strongest MiniWorld headline. Both models score similarly overall, but with different family structures: GPT-5.4 is stronger on DoorKey, Gemini stronger on RedBlue. This difference makes the family-level chart more suitable for the paper.",
+                "The new D-MW full framing results can answer a stronger question: whether prompt wording effects are unique to sparse keyframe tasks like C. If the same directional change appears on D, this conclusion becomes more convincing.",
+                "C-MW-formal and C-MW full framing together form the analysis evidence. C-formal shows that sparse-keyframe judgment error patterns are not uniform, while full framing further shows that prompt wording directional effects replicate across both models and the full item bank.",
             ],
         )
 

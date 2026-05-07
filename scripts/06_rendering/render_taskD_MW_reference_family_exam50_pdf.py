@@ -22,29 +22,29 @@ PAGE_W = 2480
 PAGE_H = 3508
 MARGIN = 120
 
-FAMILY_ZH = {
-    "doorkey": "DoorKey / 钥匙开门",
-    "multiroom": "MultiRoom / 多房间",
-    "redblue": "RedBlue / 红蓝门",
+FAMILY_NAMES = {
+    "doorkey": "DoorKey",
+    "multiroom": "MultiRoom",
+    "redblue": "RedBlue",
 }
 
-DIFFICULTY_ZH = {
-    "easy": "简单",
-    "medium": "中等",
-    "hard": "较难",
-    "structural": "结构增强",
-    "structural_v2": "结构增强 v2",
-    "highdisc_clear": "高区分度",
-    "highdisc_branch": "高区分度",
-    "highdisc_zigzag": "高区分度",
+DIFFICULTY_NAMES = {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "structural": "Structural",
+    "structural_v2": "Structural v2",
+    "highdisc_clear": "High-Disc",
+    "highdisc_branch": "High-Disc",
+    "highdisc_zigzag": "High-Disc",
 }
 
-SOURCE_ZH = {
-    "paired": "基础迁移",
-    "structural": "结构增强",
-    "highdisc_round1": "高区分度 round1",
-    "highdisc_round2": "高区分度 round2",
-    "highdisc_round3": "高区分度 round3",
+SOURCE_NAMES = {
+    "paired": "Base Migration",
+    "structural": "Structural",
+    "highdisc_round1": "High-Disc Round 1",
+    "highdisc_round2": "High-Disc Round 2",
+    "highdisc_round3": "High-Disc Round 3",
 }
 
 
@@ -94,16 +94,16 @@ def load_records(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def zh_family(family: str) -> str:
-    return FAMILY_ZH.get(family, family)
+def get_family_name(family: str) -> str:
+    return FAMILY_NAMES.get(family, family)
 
 
-def zh_difficulty(difficulty: str) -> str:
-    return DIFFICULTY_ZH.get(difficulty, difficulty)
+def get_difficulty_name(difficulty: str) -> str:
+    return DIFFICULTY_NAMES.get(difficulty, difficulty)
 
 
-def zh_source(source: str) -> str:
-    return SOURCE_ZH.get(source, source)
+def get_source_name(source: str) -> str:
+    return SOURCE_NAMES.get(source, source)
 
 
 def render_cover(records: list[dict[str, Any]], exam_path: Path) -> Image.Image:
@@ -117,19 +117,19 @@ def render_cover(records: list[dict[str, Any]], exam_path: Path) -> Image.Image:
         source = str(record["source_bucket"])
         source_counts[source] = source_counts.get(source, 0) + 1
 
-    draw.text((MARGIN, 340), "Task D-MW-RF 50 题中文审阅包", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, 340), "Task D-MW-RF 50 Questions Review Pack", fill=(0, 0, 0), font=title_font)
     draw.text((MARGIN, 450), "Reference-Family MiniWorld Exam 50", fill=(40, 40, 40), font=sub_font)
 
     body = (
-        f"题目总数：{len(records)}\n"
-        f"题库路径：{exam_path}\n\n"
-        "构成：\n"
-        f"- 基础迁移：{source_counts.get('paired', 0)} 题\n"
-        f"- 结构增强：{source_counts.get('structural', 0)} 题\n"
-        f"- 高区分度扩题：{source_counts.get('highdisc_round1', 0) + source_counts.get('highdisc_round2', 0) + source_counts.get('highdisc_round3', 0)} 题\n\n"
-        "设计思路：\n"
-        "每个 family 先给一个最简单的已知成功 reference，再判断 query 是否完成相同任务规则。\n"
-        "这版重点加入了高区分度模板，尽量避免只靠 clutter 拉难度。"
+        f"Total items: {len(records)}\n"
+        f"Exam path: {exam_path}\n\n"
+        "Composition:\n"
+        f"- Base migration: {source_counts.get('paired', 0)} items\n"
+        f"- Structural: {source_counts.get('structural', 0)} items\n"
+        f"- High-discriminability expansion: {source_counts.get('highdisc_round1', 0) + source_counts.get('highdisc_round2', 0) + source_counts.get('highdisc_round3', 0)} items\n\n"
+        "Design rationale:\n"
+        "For each family, provide the simplest known-success reference, then judge whether query completes the same task rules.\n"
+        "This version focuses on high-discriminability templates, trying to avoid relying solely on clutter for difficulty."
     )
     add_wrapped(draw, MARGIN, 650, body, body_font, PAGE_W - 2 * MARGIN, 58)
     return page
@@ -139,14 +139,14 @@ def render_instruction_page() -> Image.Image:
     page, draw = create_blank_page()
     title_font = load_font(58)
     body_font = load_font(38)
-    draw.text((MARGIN, MARGIN), "说明页", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, MARGIN), "Instructions", fill=(0, 0, 0), font=title_font)
     text = (
-        "每道题由上下两部分组成：\n"
-        "1. 上方是 Reference：同一 family 的一个已知成功例子。\n"
-        "2. 下方是 Query：路径更复杂、结构更复杂或规则被反事实干预的轨迹。\n\n"
-        "你的任务是判断：\n"
-        "Query 是否也完成了与 Reference 相同的任务目标。\n\n"
-        "答题要求：只能输出 Success 或 Fail。"
+        "Each question consists of two parts:\n"
+        "1. Top is Reference: a known-success example from the same family.\n"
+        "2. Bottom is Query: trajectory with more complex path, structure, or counterfactual intervention.\n\n"
+        "Your task:\n"
+        "Judge whether the Query also completes the same task goal as the Reference.\n\n"
+        "Answer requirement: Output only Success or Fail."
     )
     add_wrapped(draw, MARGIN, 240, text, body_font, PAGE_W - 2 * MARGIN, 54)
     return page
@@ -158,24 +158,24 @@ def render_question_page(record: dict[str, Any], idx: int, total: int, exam_root
     meta_font = load_font(32)
 
     y = MARGIN
-    draw.text((MARGIN, y), f"题目 {idx}/{total}", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), f"Question {idx}/{total}", fill=(0, 0, 0), font=title_font)
     y += 80
-    lines = [f"family：{zh_family(record['family'])}"]
+    lines = [f"Family: {get_family_name(record['family'])}"]
     if mode == "answer-key":
         lines.extend(
             [
-                f"来源：{zh_source(str(record['source_bucket']))}",
-                f"reference：{record['reference_template_id']} / {zh_difficulty(str(record['reference_difficulty']))}",
-                f"query：{record['query_template_id']} / {zh_difficulty(str(record['query_difficulty']))}",
-                f"query variant：{record['query_variant']}",
-                f"标准答案：{record['answer']}",
+                f"Source: {get_source_name(str(record['source_bucket']))}",
+                f"Reference: {record['reference_template_id']} / {get_difficulty_name(str(record['reference_difficulty']))}",
+                f"Query: {record['query_template_id']} / {get_difficulty_name(str(record['query_difficulty']))}",
+                f"Query variant: {record['query_variant']}",
+                f"Ground truth: {record['answer']}",
             ]
         )
     lines.extend(
         [
             "",
-            "判断下方 Query 是否也完成了与上方 Reference 相同的任务目标。",
-            "答案只能写：Success 或 Fail。",
+            "Judge whether the bottom Query also completes the same task goal as the top Reference.",
+            "Answer format: Success or Fail.",
         ]
     )
     for line in lines:
@@ -201,13 +201,13 @@ def render_answer_pages(records: list[dict[str, Any]]) -> list[Image.Image]:
         chunk = records[start:start + chunk_size]
         page, draw = create_blank_page()
         y = MARGIN
-        draw.text((MARGIN, y), f"答案附录 {start // chunk_size + 1}", fill=(0, 0, 0), font=title_font)
+        draw.text((MARGIN, y), f"Answer Appendix {start // chunk_size + 1}", fill=(0, 0, 0), font=title_font)
         y += 90
         for record in chunk:
             block = (
                 f"{record['exam_id']}\n"
-                f"{zh_family(record['family'])} | {zh_source(str(record['source_bucket']))} | {record['query_template_id']} | {record['query_variant']}\n"
-                f"标准答案：{record['answer']}\n"
+                f"{get_family_name(record['family'])} | {get_source_name(str(record['source_bucket']))} | {record['query_template_id']} | {record['query_variant']}\n"
+                f"Ground truth: {record['answer']}\n"
             )
             y = add_wrapped(draw, MARGIN, y, block, body_font, PAGE_W - 2 * MARGIN, 40)
             y += 20
@@ -218,14 +218,14 @@ def render_answer_pages(records: list[dict[str, Any]]) -> list[Image.Image]:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Render Chinese review PDF for 50-question MiniWorld reference-family exam")
+    ap = argparse.ArgumentParser(description="Render review PDF for 50-question MiniWorld reference-family exam")
     ap.add_argument(
         "--exam",
         default="tmp_miniworld/taskD-MW-reference-family-exam50/task_d_mw_reference_family_exam50.jsonl",
     )
     ap.add_argument(
         "--output",
-        default="tmp_miniworld/taskD-MW-reference-family-exam50/task_d_mw_reference_family_exam50_review_zh.pdf",
+        default="tmp_miniworld/taskD-MW-reference-family-exam50/task_d_mw_reference_family_exam50_review.pdf",
     )
     ap.add_argument(
         "--mode",

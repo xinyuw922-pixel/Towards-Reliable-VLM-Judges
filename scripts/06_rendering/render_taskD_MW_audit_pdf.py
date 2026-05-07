@@ -44,8 +44,7 @@ def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
             except Exception:
                 continue
     raise RuntimeError(
-        "未找到可用的中文字体，无法生成中文审计 PDF。"
-        "请确认系统中存在 msyh / NotoSansCJK / 文泉驿 等中文字体。"
+        "No suitable font found. Please ensure msyh / NotoSansCJK / DejaVu fonts are available."
     )
 
 
@@ -140,7 +139,7 @@ def overlay_topview_grid(concat_img: Image.Image, record: dict[str, Any]) -> Ima
     unit_grid_size = forward_step * steps_per_unit
 
     top_h = concat_img.height // 2
-    topview = concat_img.crop((0, top_h, concat_img.width, concat_img.height)).convert("RGBA")
+    topview = concat_img.crop((0, top_h, concat_img.height)).convert("RGBA")
 
     cell_w = max(1.0, unit_grid_size * x_scale)
     cell_h = max(1.0, unit_grid_size * z_scale)
@@ -173,7 +172,7 @@ def overlay_topview_grid(concat_img: Image.Image, record: dict[str, Any]) -> Ima
 
 
 # ---------------------------------------------------------------------------
-# English / Chinese prompt helpers
+# English prompt helpers
 # ---------------------------------------------------------------------------
 
 def en_prompt(record: dict[str, Any]) -> str:
@@ -202,12 +201,12 @@ def en_prompt(record: dict[str, Any]) -> str:
         f"  [{planned}]\n"
         "Action unit convention:\n"
         f"  - 1 unit = {steps_per_unit} primitive forward steps\n"
-        f"  - 1 unit = {forward_step:.2f} × {steps_per_unit} = ~{unit_grid_size:.2f} grid units\n"
+        f"  - 1 unit = {forward_step:.2f} x {steps_per_unit} = ~{unit_grid_size:.2f} grid units\n"
         f"  - Each primitive forward step = {forward_step:.2f} grid units\n"
         f"  - The topview grid is labeled in these units (1 cell = 1 unit).{turn_note}\n"
         "One of the two outcome views shows the actual result:\n"
         "  - Successful: the agent clearly travels through the environment "
-        "(through doors, corridors, or a long distance).\n"
+        "( through doors, corridors, or a long distance).\n"
         "  - Failed: the agent hits a wall and remains stuck near the starting position.\n"
         "The trajectory is successful if the agent clearly travels; "
         "it fails if the agent remains stuck near the starting position.\n"
@@ -217,35 +216,13 @@ def en_prompt(record: dict[str, Any]) -> str:
     )
 
 
-def zh_prompt(record: dict[str, Any]) -> str:
-    planned = record.get("planned_trajectory", "")
-    forward_step = record.get("forward_step", 0.15)
-    steps_per_unit = record.get("steps_per_unit", STEPS_PER_UNIT)
-    unit_grid_size = round(forward_step * steps_per_unit, 2)
-    return (
-        "题型：轨迹结果判断（Trajectory Judgment）\n"
-        f"从初始状态出发，执行了以下动作：[{planned}]\n"
-        "动作单位约定：\n"
-        f"  - 1 unit = {steps_per_unit} 步 primitive 前进步\n"
-        f"  - 1 unit = {forward_step:.2f} × {steps_per_unit} ≈ {unit_grid_size:.2f} 个网格单位\n"
-        f"  - 每次 primitive 前进一步移动 {forward_step:.2f} 个网格单位\n"
-        "  - 俯视图网格按 unit 标注（1格 = 1 unit）\n"
-        "两个候选结果图中，一张显示代理成功穿过了环境（穿过门，大幅位移），"
-        "另一张显示代理撞墙后停在起始位置附近。\n"
-        "轨迹成功的判定标准：代理明显在环境中穿行。"
-        "轨迹失败的判定标准：代理困在起始位置附近。\n"
-        "哪张候选图匹配这次轨迹的真实结果？\n"
-        "作答要求：只回答一个字母 A 或 B。"
-    )
-
-
-def zh_seq(seq: list[str]) -> str:
+def en_seq(seq: list[str]) -> str:
     mapping = {
-        "turn_left": "左转(primitive)",
-        "turn_right": "右转(primitive)",
-        "move_forward": "前进(primitive)",
+        "turn_left": "turn_left (primitive)",
+        "turn_right": "turn_right (primitive)",
+        "move_forward": "move_forward (primitive)",
     }
-    return " → ".join(mapping.get(a, a) for a in seq)
+    return " -> ".join(mapping.get(a, a) for a in seq)
 
 
 # ---------------------------------------------------------------------------
@@ -261,32 +238,32 @@ def build_cover(
     body_font = load_font(38)
 
     y = 280
-    mode_label = "（盲审版 — 不含答案）" if mode == "blind" else "（答案版 — 含标准答案）"
+    mode_label = "(Blind Review)" if mode == "blind" else "(Answer Key Version)"
     draw.text(
         (MARGIN, y),
-        f"Trajectory Judgment D-MW 审计包 {mode_label}",
+        f"Trajectory Judgment D-MW Audit Pack {mode_label}",
         fill=(0, 0, 0),
         font=title_font,
     )
     y += 110
     draw.text(
         (MARGIN, y),
-        "题型：轨迹结果判断（Trajectory Judgment）",
+        "Question Type: Trajectory Judgment",
         fill=(0, 0, 0),
         font=sub_font,
     )
     y += 90
 
     content_note = (
-        "每页内容：初始状态图（ego+俯视图，已标注栅格） + "
-        "候选A图（含完整ego+俯视，已标注栅格） + "
-        "候选B图（含完整ego+俯视，已标注栅格） + 轨迹描述"
+        "Page content: Initial state (ego+topview with grid) + "
+        "Candidate A (ego+topview with grid) + "
+        "Candidate B (ego+topview with grid) + Trajectory description"
         if mode == "blind"
         else (
-            "每页内容：初始状态图（ego+俯视图，已标注栅格） + "
-            "候选A图（含完整ego+俯视，已标注栅格） + "
-            "候选B图（含完整ego+俯视，已标注栅格） + "
-            "轨迹描述 + 正确答案 + success/failure 终态元数据"
+            "Page content: Initial state (ego+topview with grid) + "
+            "Candidate A (ego+topview with grid) + "
+            "Candidate B (ego+topview with grid) + "
+            "Trajectory description + Correct answer + success/failure terminal metadata"
         )
     )
     draw.text((MARGIN, y), content_note, fill=(40, 40, 40), font=sub_font)
@@ -309,28 +286,28 @@ def build_cover(
         success_dirs[sd] = success_dirs.get(sd, 0) + 1
         failure_dirs[fd] = failure_dirs.get(fd, 0) + 1
         if "turn" not in pt.lower():
-            planned_kinds["直行"] = planned_kinds.get("直行", 0) + 1
+            planned_kinds["straight"] = planned_kinds.get("straight", 0) + 1
         else:
-            planned_kinds["有转向"] = planned_kinds.get("有转向", 0) + 1
+            planned_kinds["with_turn"] = planned_kinds.get("with_turn", 0) + 1
 
     summary_lines = [
-        f"题目来源：{exam_path}",
-        f"总题数：{len(records)}（A={a_count} / B={b_count}）",
-        "环境：MiniWorld-FourRooms-v0",
-        "当前状态图：ego_topview_concat（上=ego第一人称，下=topview俯视图，已标注栅格）",
-        "俯视栅格约定：1 格 = 1 unit = 10 步 primitive 前进步 ≈ "
-        f"{unit_grid:.2f} 个网格单位",
-        "题型说明：给定一个「沿某方向前进若干 unit」的规划轨迹，判断代理最终是"
-        "成功穿行（穿过门，大幅位移）还是撞墙失败（困在起点附近）。",
-        "成功语义：代理有明显位移（穿过门或经过长走廊）。",
-        "失败语义：代理撞墙，未能离开起始区域（停在起点附近）。",
-        f"规划轨迹分布（按方向）：{dict(sorted(success_dirs.items()))}",
-        f"失败方向分布：{dict(sorted(failure_dirs.items()))}",
-        f"轨迹类型：{dict(sorted(planned_kinds.items()))}",
+        f"Exam source: {exam_path}",
+        f"Total items: {len(records)} (A={a_count} / B={b_count})",
+        "Environment: MiniWorld-FourRooms-v0",
+        "Current state: ego_topview_concat (top=ego first-person, bottom=topview with grid)",
+        "Topview grid convention: 1 cell = 1 unit = 10 primitive forward steps = "
+        f"{unit_grid:.2f} grid units",
+        "Question description: Given a planned trajectory 'move in some direction for N units', judge whether the agent finally "
+        "successfully travels (through doors, large displacement) or fails by hitting wall (stuck near start).",
+        "Success semantics: Agent has obvious displacement (through door or along corridor).",
+        "Failure semantics: Agent hits wall, fails to leave starting area (stuck near start).",
+        f"Planned trajectory distribution (by direction): {dict(sorted(success_dirs.items()))}",
+        f"Failure direction distribution: {dict(sorted(failure_dirs.items()))}",
+        f"Trajectory type: {dict(sorted(planned_kinds.items()))}",
         (
-            "盲审说明：请先不看答案，根据初始图+轨迹描述，判断A/B哪个是真实轨迹结果。"
+            "Blind review: Please judge which of A/B is the true trajectory result without looking at the answer."
             if mode == "blind"
-            else "答案版说明：含标准答案和终态位置/朝向元数据，仅供复核使用。"
+            else "Answer key version: Contains correct answer and terminal position/orientation metadata, for verification only."
         ),
     ]
     y = add_wrapped_block(
@@ -357,10 +334,10 @@ def render_question_page(
     content_w = PAGE_W - 2 * MARGIN
     y = MARGIN
 
-    mode_tag = "[盲审]" if mode == "blind" else "[答案版]"
+    mode_tag = "[Blind]" if mode == "blind" else "[Answer Key]"
     draw.text(
         (MARGIN, y),
-        f"Trajectory Judgment  轨迹结果判断  {mode_tag}  {idx}/{total}",
+        f"Trajectory Judgment {mode_tag} {idx}/{total}",
         fill=(0, 0, 0),
         font=title_font,
     )
@@ -369,9 +346,9 @@ def render_question_page(
     meta_parts = [
         f"UID: {record['uid']}",
         f"Seed: {record['seed']}",
-        f"环境: {record['env_task']}",
-        f"成功方向: {record.get('success_dir', '?')}",
-        f"失败方向: {record.get('failure_dir', '?')}",
+        f"Env: {record['env_task']}",
+        f"Success direction: {record.get('success_dir', '?')}",
+        f"Failure direction: {record.get('failure_dir', '?')}",
     ]
     draw.text((MARGIN, y), "    ".join(meta_parts), fill=(60, 60, 60), font=small_font)
     y += 44
@@ -401,7 +378,7 @@ def render_question_page(
     page.paste(initial_fit, (MARGIN, y))
     draw.text(
         (MARGIN, y + initial_fit.height + 12),
-        "初始状态图（Initial State — 执行轨迹前的状态，已标注栅格）",
+        "Initial State (Before executing trajectory, with grid)",
         fill=(60, 60, 60),
         font=label_font,
     )
@@ -422,13 +399,13 @@ def render_question_page(
 
     draw.text(
         (cand_a_x, y),
-        "候选 A（候选结果图 A，已标注栅格）",
+        "Candidate A (Outcome A with grid)",
         fill=(0, 0, 0),
         font=label_font,
     )
     draw.text(
         (cand_b_x, y),
-        "候选 B（候选结果图 B，已标注栅格）",
+        "Candidate B (Outcome B with grid)",
         fill=(0, 0, 0),
         font=label_font,
     )
@@ -445,7 +422,7 @@ def render_question_page(
     planned = record.get("planned_trajectory", "?")
     draw.text(
         (MARGIN, y),
-        "规划轨迹（Planned Trajectory — 从初始状态执行的动作序列）：",
+        "Planned Trajectory (Action sequence executed from initial state):",
         fill=(0, 0, 0),
         font=title_font,
     )
@@ -454,7 +431,7 @@ def render_question_page(
     if mode == "answer-key":
         draw.text(
             (MARGIN, y),
-            f"规划轨迹：{planned}",
+            f"Planned trajectory: {planned}",
             fill=(0, 80, 160),
             font=load_font(34),
         )
@@ -463,14 +440,14 @@ def render_question_page(
         f_seq = record.get("failure_sequence", [])
         draw.text(
             (MARGIN, y),
-            f"success 序列（primitive）：{zh_seq(s_seq)}",
+            f"Success sequence (primitive): {en_seq(s_seq)}",
             fill=(0, 100, 0),
             font=load_font(30),
         )
         y += 44
         draw.text(
             (MARGIN, y),
-            f"failure 序列（primitive）：{zh_seq(f_seq)}",
+            f"Failure sequence (primitive): {en_seq(f_seq)}",
             fill=(100, 100, 100),
             font=load_font(30),
         )
@@ -478,7 +455,7 @@ def render_question_page(
     else:
         draw.text(
             (MARGIN, y),
-            f"规划轨迹：{planned}",
+            f"Planned trajectory: {planned}",
             fill=(0, 0, 0),
             font=load_font(34),
         )
@@ -487,16 +464,10 @@ def render_question_page(
     y += 20
 
     # Prompt text
-    draw.text((MARGIN, y), "Question (English):", fill=(0, 0, 0), font=body_font)
+    draw.text((MARGIN, y), "Question:", fill=(0, 0, 0), font=body_font)
     y += 40
     y = add_wrapped_block(
         draw, MARGIN, y, en_prompt(record), prompt_font, content_w, 38
-    )
-    y += 18
-    draw.text((MARGIN, y), "中文翻译：", fill=(0, 0, 0), font=body_font)
-    y += 40
-    y = add_wrapped_block(
-        draw, MARGIN, y, zh_prompt(record), prompt_font, content_w, 38
     )
     y += 20
 
@@ -535,16 +506,16 @@ def render_question_page(
             )
 
         answer_text = (
-            f"标准答案：{gt}（正确答案 = 候选 {gt}）\n"
-            f"初始状态：位置{initial_pos}  朝向{record.get('initial_agent_cardinal', '?')}\n"
-            f"Success 终态：位置{success_pos}  朝向{record.get('success_agent_cardinal', '?')}  "
-            f"位移距离≈{success_dist:.3f}\n"
-            f"Failure 终态：位置{failure_pos}  朝向{record.get('failure_agent_cardinal', '?')}  "
-            f"位移距离≈{failure_dist:.3f}\n"
-            f"失败是否留在起点附近：{record.get('failure_stayed_near_start', '?')}  "
-            f"失败位移≈{record.get('failure_travel_distance', 0):.3f}\n"
-            f"成功方向：{record.get('success_dir', '?')}  "
-            f"失败方向：{record.get('failure_dir', '?')}"
+            f"Ground truth: {gt} (Correct answer = Candidate {gt})\n"
+            f"Initial state: Position {initial_pos}  Direction {record.get('initial_agent_cardinal', '?')}\n"
+            f"Success terminal: Position {success_pos}  Direction {record.get('success_agent_cardinal', '?')}  "
+            f"Distance approx {success_dist:.3f}\n"
+            f"Failure terminal: Position {failure_pos}  Direction {record.get('failure_agent_cardinal', '?')}  "
+            f"Distance approx {failure_dist:.3f}\n"
+            f"Failure stays near start: {record.get('failure_stayed_near_start', '?')}  "
+            f"Failure displacement approx {record.get('failure_travel_distance', 0):.3f}\n"
+            f"Success direction: {record.get('success_dir', '?')}  "
+            f"Failure direction: {record.get('failure_dir', '?')}"
         )
         add_wrapped_block(
             draw,

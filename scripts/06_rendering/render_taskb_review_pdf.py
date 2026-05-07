@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Render a Chinese PDF review pack for Task B manual auditing.
+Render a PDF review pack for Task B manual auditing.
 
 Output structure:
 1. Cover page
-2. One instruction page with translated Task B v7 prompt
-3. One page per question (image + short Chinese task statement)
+2. One instruction page with Task B v7 prompt
+3. One page per question (image + short task statement)
 4. Answer appendix pages at the end
 """
 
@@ -25,13 +25,13 @@ PAGE_W = 2480
 PAGE_H = 3508
 MARGIN = 120
 
-TITLE = "Task B 人工做题审阅包"
+TITLE = "Task B Manual Review Pack"
 SUBTITLE = "GridWM-Judge / Structured State Perception"
 
 
 def load_font(size: int) -> ImageFont.FreeTypeFont:
     if not FONT_PATH.exists():
-        raise FileNotFoundError(f"Chinese font not found: {FONT_PATH}")
+        raise FileNotFoundError(f"Font not found: {FONT_PATH}")
     return ImageFont.truetype(str(FONT_PATH), size=size)
 
 
@@ -79,7 +79,7 @@ def load_records(path: Path) -> List[Dict[str, Any]]:
     ]
 
 
-def env_name_zh(env_task: str) -> str:
+def env_name(env_task: str) -> str:
     mapping = {
         "doorkey": "DoorKey",
         "keycorridor": "KeyCorridor",
@@ -91,96 +91,96 @@ def env_name_zh(env_task: str) -> str:
     return mapping.get(env_task, env_task)
 
 
-def color_zh(color: str | None) -> str | None:
+def color_name(color: str | None) -> str | None:
     mapping = {
-        "red": "红",
-        "green": "绿",
-        "blue": "蓝",
-        "yellow": "黄",
-        "purple": "紫",
-        "grey": "灰",
+        "red": "Red",
+        "green": "Green",
+        "blue": "Blue",
+        "yellow": "Yellow",
+        "purple": "Purple",
+        "grey": "Grey",
     }
     if color is None:
         return None
     return mapping.get(color, color)
 
 
-def type_zh(kind: str | None) -> str | None:
+def type_name(kind: str | None) -> str | None:
     mapping = {
-        "empty": "空格",
-        "wall": "墙",
-        "door": "门",
-        "goal": "目标格",
-        "ball": "球",
-        "key": "钥匙",
-        "lava": "岩浆",
-        "box": "箱子",
+        "empty": "Empty",
+        "wall": "Wall",
+        "door": "Door",
+        "goal": "Goal",
+        "ball": "Ball",
+        "key": "Key",
+        "lava": "Lava",
+        "box": "Box",
     }
     if kind is None:
         return None
     return mapping.get(kind, kind)
 
 
-def door_state_zh(state: Any) -> str:
+def door_state_name(state: Any) -> str:
     mapping = {
-        0: "0（开）",
-        1: "1（关，未锁）",
-        2: "2（锁住）",
+        0: "0 (Open)",
+        1: "1 (Closed)",
+        2: "2 (Locked)",
         None: "null",
     }
     return mapping.get(state, str(state))
 
 
-def carrying_zh(carrying: Dict[str, Any] | None) -> str:
+def carrying_name(carrying: Dict[str, Any] | None) -> str:
     if not carrying:
-        return "null（未携带）"
-    return f"{type_zh(carrying.get('type'))}-{color_zh(carrying.get('color'))}"
+        return "null (Not carrying)"
+    return f"{type_name(carrying.get('type'))}-{color_name(carrying.get('color'))}"
 
 
-def prompt_translation() -> str:
+def prompt_text() -> str:
     return (
-        "任务说明（Task B v7.1 中文翻译）\n\n"
-        "你需要只根据这张 7x7 MiniGrid 图像，写出一个 JSON 对象，且只能包含 agent、front_cell、objects 三个键。\n\n"
-        "坐标系：\n"
-        "1. 使用基于图像的 1-based 坐标。\n"
-        "2. 原点在图像左下角。\n"
-        "3. x 向右增大，y 向上增大。\n"
-        "4. 所有位置都写成 [x=列, y=行]。\n"
-        "5. 合法范围是 x∈[1,7], y∈[1,7]。\n\n"
-        "颜色词表：\n"
-        "只允许使用 red, green, blue, yellow, purple, grey 这六种标准颜色；不要自造颜色名。\n"
-        "岩浆必须是红色（red）。目标必须是绿色（green）。\n\n"
-        "agent.dir 编码：\n"
-        "0=右/east，1=下/south，2=左/west，3=上/north。\n\n"
-        "state 字段——门状态视觉图例（关键）：\n"
-        "front_cell 和每个 object 都必须有 state。\n"
-        "只有门（door）需要用数字表示 state，从门的可见外观来判断：\n"
-        "  state = 0（开）：门是敞开的，门板不封住门框，看起来可以通过\n"
-        "  state = 1（关）：门把手标记看起来是一个小圆圈\n"
-        "  state = 2（锁）：门把手标记看起来是一条短横线（\"-\"）\n"
-        "根据门的实际外观来判断 state，不要根据任务上下文猜测。\n"
-        "所有非门类型，state 一律写 null。\n"
-        "不要对非门类型输出 0。\n"
-        "不要输出 \"open\"、\"closed\" 等字符串。\n\n"
-        "其他规则：\n"
-        "1. 只能根据图片判断，不要依赖额外信息。\n"
-        "2. 不要假设固定的 agent 位置。\n"
-        "3. front_cell 必须单独报告。\n"
-        "4. front_cell.type 是智能体正前方那个格子的占据类型。\n"
-        "5. front_cell.type 只能用：empty, wall, door, goal, ball, key, lava, box。\n"
-        "6. 不要把 front_cell 格子重复放进 objects。\n"
-        "7. objects 里只报告非背景物体：key, ball, door, goal, lava, box。\n"
-        "8. 不要报告 wall、floor、empty 作为 objects。\n"
-        "9. 看不清楚的物体不要乱报；不要臆造物体、颜色或状态。\n\n"
-        "建议答题格式：\n"
+        "Task Instructions (Task B v7.1)\n\n"
+        "Based on this 7x7 MiniGrid image, write a JSON object with only three keys: agent, front_cell, objects.\n\n"
+        "Coordinate system:\n"
+        "1. Use image-based 1-based coordinates.\n"
+        "2. Origin is bottom-left corner of the image.\n"
+        "3. x increases to the right, y increases upward.\n"
+        "4. All positions written as [x=col, y=row].\n"
+        "5. Valid range is x in [1,7], y in [1,7].\n\n"
+        "Color vocabulary:\n"
+        "Only allow red, green, blue, yellow, purple, grey six standard colors; do not invent color names.\n"
+        "Lava must be red. Goal must be green.\n\n"
+        "agent.dir encoding:\n"
+        "0=right/east, 1=down/south, 2=left/west, 3=up/north.\n\n"
+        "state field -- Door state visual legend (critical):\n"
+        "Both front_cell and each object must have state.\n"
+        "Only doors need numeric state, judged from visible appearance:\n"
+        "  state = 0 (Open): Door is open, frame not blocking passage\n"
+        "  state = 1 (Closed): Door handle appears as a small circle\n"
+        "  state = 2 (Locked): Door handle appears as a short dash ('-')\n"
+        "Judge state from actual door appearance, not from task context.\n"
+        "All non-door types, state must be null.\n"
+        "Do not output 0 for non-door types.\n"
+        "Do not output strings like 'open', 'closed'.\n\n"
+        "Other rules:\n"
+        "1. Judge only from image, do not rely on extra information.\n"
+        "2. Do not assume fixed agent position.\n"
+        "3. front_cell must be reported separately.\n"
+        "4. front_cell.type is the cell type directly in front of the agent.\n"
+        "5. front_cell.type can only be: empty, wall, door, goal, ball, key, lava, box.\n"
+        "6. Do not put front_cell in objects.\n"
+        "7. Only report non-background objects: key, ball, door, goal, lava, box.\n"
+        "8. Do not report wall, floor, empty as objects.\n"
+        "9. Do not guess objects you cannot see clearly; do not invent objects, colors, or states.\n\n"
+        "Suggested answer format:\n"
         "{\n"
         '  "agent": {"pos": [x, y], "dir": d, "carrying": null_or_object},\n'
         '  "front_cell": {"pos": [x, y], "type": "TYPE", "state": null_or_door_state},\n'
         '  "objects": [{"type": "TYPE", "pos": [x, y], "color": "COLOR", "state": null_or_door_state}]\n'
         "}\n\n"
-        "只输出原始 JSON，不要 markdown、不要代码块、不要解释。\n\n"
-        "提示词版本：Task B prompt v7.1（新增门状态视觉图例）\n"
-        "本 PDF 前半部分不放答案，便于你先人工作答；最后附标准答案方便核对。"
+        "Output only raw JSON, no markdown, no code blocks, no explanations.\n"
+        "Prompt version: Task B prompt v7.1 (new door state visual legend)\n"
+        "First half of this PDF has no answers, for you to practice; answer key at the end for verification."
     )
 
 
@@ -202,13 +202,13 @@ def render_cover(records: List[Dict[str, Any]]) -> Image.Image:
     y += 120
 
     body = (
-        f"题目总数：{len(records)}\n"
-        "用途：人工阅读图片并手动判断 Task B 的结构化状态答案。\n"
-        f"组成：封面 + 说明页 + {len(records)} 道题目页 + 答案附录。\n\n"
-        "建议做法：\n"
-        "1. 先只看题目页自己作答。\n"
-        "2. 做完后再翻到最后的答案附录核对。\n"
-        "3. 如果你觉得某题图像其实很清楚，就能顺便检验 Task B 的人类可读性。"
+        f"Total items: {len(records)}\n"
+        "Purpose: Human reading images and manually determining Task B structured state answers.\n"
+        f"Contents: Cover + Instructions + {len(records)} question pages + Answer appendix.\n\n"
+        "Suggested approach:\n"
+        "1. First answer questions on your own.\n"
+        "2. Check against answer appendix at the end.\n"
+        "3. If you think some images are clear, this verifies Task B human readability."
     )
     add_wrapped_block(draw, MARGIN, y, body, body_font, PAGE_W - 2 * MARGIN, 64)
     return page
@@ -220,9 +220,9 @@ def render_instruction_page() -> Image.Image:
     body_font = load_font(36)
 
     y = MARGIN
-    draw.text((MARGIN, y), "说明页", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), "Instructions", fill=(0, 0, 0), font=title_font)
     y += 90
-    add_wrapped_block(draw, MARGIN, y, prompt_translation(), body_font, PAGE_W - 2 * MARGIN, 48)
+    add_wrapped_block(draw, MARGIN, y, prompt_text(), body_font, PAGE_W - 2 * MARGIN, 48)
     return page
 
 
@@ -233,23 +233,23 @@ def render_question_page(record: Dict[str, Any], idx: int, total: int, exam_root
     body_font = load_font(38)
 
     y = MARGIN
-    draw.text((MARGIN, y), f"题目 {idx}/{total}", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), f"Question {idx}/{total}", fill=(0, 0, 0), font=title_font)
     y += 78
     meta_lines = [
-        f"环境：{env_name_zh(record['uid'].split('.')[1])}",
-        f"exam_id：{record['exam_id']}",
-        "请根据下图，手动写出 Task B 的 JSON 答案。",
-        "提示：先判断 agent，再判断 front_cell，最后列出 objects。",
+        f"Environment: {env_name(record['uid'].split('.')[1])}",
+        f"Exam ID: {record['exam_id']}",
+        "Based on the image below, manually write Task B JSON answer.",
+        "Hint: Judge agent first, then front_cell, finally list objects.",
     ]
     for line in meta_lines:
-        draw.text((MARGIN, y), line, fill=(20, 20, 20), font=meta_font if "exam_id" in line or "环境" in line else body_font)
-        y += 48 if "exam_id" in line or "环境" in line else 56
+        draw.text((MARGIN, y), line, fill=(20, 20, 20), font=meta_font if "Exam ID" in line or "Environment" in line else body_font)
+        y += 48 if "Exam ID" in line or "Environment" in line else 56
 
     y += 20
     prompt = (
-        "中文题面：请只根据图片，输出一个 JSON 对象，包含 agent、front_cell、objects。"
-        " 坐标使用左下角为原点的 1-based [x, y]；agent.dir 使用 0=右, 1=下, 2=左, 3=上；"
-        " door 的 state 用 0=开, 1=关, 2=锁，非 door 的 state 写 null。"
+        "English prompt: Based only on the image, output a JSON object with agent, front_cell, objects."
+        " Coordinates use bottom-left origin 1-based [x, y]; agent.dir uses 0=right, 1=down, 2=left, 3=up;"
+        " door state uses 0=open, 1=closed, 2=locked, non-door state is null."
     )
     y = add_wrapped_block(draw, MARGIN, y, prompt, body_font, PAGE_W - 2 * MARGIN, 52)
 
@@ -272,27 +272,27 @@ def answer_summary(record: Dict[str, Any]) -> str:
     objects = ans["objects"]
 
     lines = [
-        f"exam_id：{record['exam_id']}",
-        f"环境：{env_name_zh(record['uid'].split('.')[1])}",
+        f"Exam ID: {record['exam_id']}",
+        f"Environment: {env_name(record['uid'].split('.')[1])}",
         f"agent.pos = {agent['pos']}",
-        f"agent.dir = {agent['dir']}（0右 / 1下 / 2左 / 3上）",
-        f"agent.carrying = {carrying_zh(agent.get('carrying'))}",
+        f"agent.dir = {agent['dir']} (0=right / 1=down / 2=left / 3=up)",
+        f"agent.carrying = {carrying_name(agent.get('carrying'))}",
         f"front_cell.pos = {fc['pos']}",
-        f"front_cell.type = {fc['type']}（{type_zh(fc['type'])}）",
-        f"front_cell.state = {door_state_zh(fc.get('state'))}",
-        f"objects 数量 = {len(objects)}",
+        f"front_cell.type = {fc['type']} ({type_name(fc['type'])})",
+        f"front_cell.state = {door_state_name(fc.get('state'))}",
+        f"objects count = {len(objects)}",
     ]
     if objects:
         for i, obj in enumerate(objects, start=1):
             lines.append(
-                f"  {i}. {obj['type']}（{type_zh(obj['type'])}）, "
-                f"pos={obj['pos']}, color={obj.get('color')}（{color_zh(obj.get('color'))}）, "
-                f"state={door_state_zh(obj.get('state'))}"
+                f"  {i}. {obj['type']} ({type_name(obj['type'])}), "
+                f"pos={obj['pos']}, color={obj.get('color')} ({color_name(obj.get('color'))}), "
+                f"state={door_state_name(obj.get('state'))}"
             )
     else:
-        lines.append("  无 objects")
+        lines.append("  No objects")
     lines.append("")
-    lines.append("原始标准答案 JSON：")
+    lines.append("Original ground truth JSON:")
     lines.append(json.dumps(ans, ensure_ascii=False, indent=2))
     return "\n".join(lines)
 
@@ -310,7 +310,7 @@ def render_answer_pages(records: List[Dict[str, Any]]) -> List[Image.Image]:
     for page_idx, chunk in enumerate(chunks, start=1):
         page, draw = create_blank_page()
         y = MARGIN
-        draw.text((MARGIN, y), f"答案附录 {page_idx}/{len(chunks)}", fill=(0, 0, 0), font=title_font)
+        draw.text((MARGIN, y), f"Answer Appendix {page_idx}/{len(chunks)}", fill=(0, 0, 0), font=title_font)
         y += 80
         for record in chunk:
             y = add_wrapped_block(
@@ -340,7 +340,7 @@ def main() -> None:
     ap.add_argument(
         "--output",
         type=Path,
-        default=Path("datasets/exams_taskb_repaired_candidate/task_b_review_zh_with_answers.pdf"),
+        default=Path("datasets/exams_taskb_repaired_candidate/task_b_review_with_answers.pdf"),
         help="Output PDF path",
     )
     args = ap.parse_args()

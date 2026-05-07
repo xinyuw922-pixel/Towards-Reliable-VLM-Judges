@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Render a Chinese PDF review pack for Task D-R manual auditing.
+Render a PDF review pack for Task D-R manual auditing.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ PAGE_W = 2480
 PAGE_H = 3508
 MARGIN = 120
 
-TITLE = "Task D-R 人工审阅包"
+TITLE = "Task D-R Review Pack"
 SUBTITLE = "GridWM-Judge / Reference-Aided Task D Audit"
 
 
@@ -72,7 +72,7 @@ def load_records(path: Path) -> List[Dict[str, Any]]:
     ]
 
 
-def env_name_zh(env_task: str) -> str:
+def env_name(env_task: str) -> str:
     mapping = {
         "doorkey": "DoorKey",
         "keycorridor": "KeyCorridor",
@@ -89,21 +89,21 @@ def create_blank_page() -> tuple[Image.Image, ImageDraw.ImageDraw]:
     return page, ImageDraw.Draw(page)
 
 
-def prompt_translation() -> str:
+def prompt_text() -> str:
     return (
-        "任务说明（Task D-R 中文翻译）\n\n"
-        "每道题包含两段来自同一环境的轨迹拼图。\n"
-        "上方是已知成功的参考轨迹，下方是待判断轨迹。\n\n"
-        "你的任务是判断：下方 query 轨迹是否也完成了与上方 reference 相同的任务目标。\n\n"
-        "当前扩展版还包含三类变化：\n"
-        "1. query 可能来自 full / nocue / cf 三种 variant\n"
-        "2. 图像可能是 clean 或 style\n"
-        "3. 题面可能带 neu / pos / neg 三种提示语气\n\n"
-        "答题要求：\n"
-        "1. 参考轨迹一定是成功示例。\n"
-        "2. 只根据图像判断 query 是否完成相同任务。\n"
-        "3. 不要把 style 当成语义变化，也不要被语气提示带偏。\n"
-        "4. 只能输出 Success 或 Fail。"
+        "Task Instructions (Task D-R)\n\n"
+        "Each question contains two trajectory fragments from the same environment.\n"
+        "The top shows a reference trajectory with known success; the bottom shows the query trajectory to be judged.\n\n"
+        "Your task: Determine whether the bottom query trajectory also completes the same task goal as the top reference.\n\n"
+        "The extended version includes three types of variations:\n"
+        "1. Query may come from full / nocue / cf variants\n"
+        "2. Images may be clean or styled\n"
+        "3. Prompts may have neu / pos / neg framing\n\n"
+        "Answer requirements:\n"
+        "1. Reference trajectories are always successful examples.\n"
+        "2. Judge only based on images whether query completes the same task.\n"
+        "3. Do not treat style as semantic change; do not be biased by framing cues.\n"
+        "4. Output only: Success or Fail."
     )
 
 
@@ -120,14 +120,14 @@ def render_cover(records: List[Dict[str, Any]]) -> Image.Image:
     y += 120
 
     body = (
-        f"题目总数：{len(records)}\n"
-        "用途：用一个已知成功参考轨迹，帮助人工和模型判断 query 轨迹是否也完成同一任务。\n"
-        f"组成：封面 + 说明页 + {len(records)} 道题目页 + 答案附录。\n\n"
-        "建议做法：\n"
-        "1. 先看上半部分参考轨迹，理解这个环境里什么算成功。\n"
-        "2. 再看下半部分 query 轨迹，判断它是否达到相同目标。\n"
-        "3. 同时留意题目里的 query variant / visual / framing 标注。\n"
-        "4. 最后再翻答案附录核对。"
+        f"Total items: {len(records)}\n"
+        "Purpose: Use a known-successful reference trajectory to help humans and models judge whether the query trajectory completes the same task.\n"
+        f"Contents: Cover + Instructions + {len(records)} question pages + Answer appendix.\n\n"
+        "Suggested approach:\n"
+        "1. First examine the top reference trajectory to understand what counts as success in this environment.\n"
+        "2. Then examine the bottom query trajectory to judge whether it achieves the same goal.\n"
+        "3. Also pay attention to query variant / visual / framing labels.\n"
+        "4. Finally check against the answer appendix."
     )
     add_wrapped_block(draw, MARGIN, y, body, body_font, PAGE_W - 2 * MARGIN, 64)
     return page
@@ -139,9 +139,9 @@ def render_instruction_page() -> Image.Image:
     body_font = load_font(36)
 
     y = MARGIN
-    draw.text((MARGIN, y), "说明页", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), "Instructions", fill=(0, 0, 0), font=title_font)
     y += 90
-    add_wrapped_block(draw, MARGIN, y, prompt_translation(), body_font, PAGE_W - 2 * MARGIN, 50)
+    add_wrapped_block(draw, MARGIN, y, prompt_text(), body_font, PAGE_W - 2 * MARGIN, 50)
     return page
 
 
@@ -153,23 +153,23 @@ def render_question_page(record: Dict[str, Any], idx: int, total: int, exam_root
 
     env = record["env_id"]
     y = MARGIN
-    draw.text((MARGIN, y), f"题目 {idx}/{total}", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), f"Question {idx}/{total}", fill=(0, 0, 0), font=title_font)
     y += 78
 
     meta_lines = [
-        f"环境：{env_name_zh(env)}",
-        f"reference group：{record['reference_group_id']}",
-        f"query group：{record['group_id']}",
-        f"query variant：{record['query_variant']}",
-        f"visual：{record.get('visual', 'clean')}（{record.get('visual_translation_zh', '')}）",
-        f"framing：{record.get('framing', 'neu')}（{record.get('framing_translation_zh', '')}）",
-        f"exam_id：{record['exam_id']}",
-        "请判断下方 query 轨迹是否完成了与上方参考轨迹相同的任务目标。",
-        "答案只能写：Success 或 Fail。",
+        f"Environment: {env_name(env)}",
+        f"Reference group: {record['reference_group_id']}",
+        f"Query group: {record['group_id']}",
+        f"Query variant: {record['query_variant']}",
+        f"Visual: {record.get('visual', 'clean')}",
+        f"Framing: {record.get('framing', 'neu')}",
+        f"Exam ID: {record['exam_id']}",
+        "Please judge whether the bottom query trajectory completes the same task goal as the top reference trajectory.",
+        "Answer format: Success or Fail.",
     ]
     for line in meta_lines:
-        draw.text((MARGIN, y), line, fill=(20, 20, 20), font=meta_font if "请判断" not in line and "答案只能写" not in line else body_font)
-        y += 48 if "请判断" not in line and "答案只能写" not in line else 56
+        draw.text((MARGIN, y), line, fill=(20, 20, 20), font=meta_font if "Please judge" not in line and "Answer format" not in line else body_font)
+        y += 48 if "Please judge" not in line and "Answer format" not in line else 56
 
     img_path = exam_root / record["image"]
     img = Image.open(img_path).convert("RGB")
@@ -186,13 +186,13 @@ def render_question_page(record: Dict[str, Any], idx: int, total: int, exam_root
 def answer_summary(record: Dict[str, Any]) -> str:
     return "\n".join(
         [
-            f"exam_id：{record['exam_id']}",
-            f"环境：{env_name_zh(record['env_id'])}",
-            f"reference：{record['reference_group_id']}",
-            f"query：{record['group_id']} / {record['query_variant']}",
-            f"visual：{record.get('visual', 'clean')}",
-            f"framing：{record.get('framing', 'neu')}",
-            f"标准答案：{record['answer']}",
+            f"Exam ID: {record['exam_id']}",
+            f"Environment: {env_name(record['env_id'])}",
+            f"Reference: {record['reference_group_id']}",
+            f"Query: {record['group_id']} / {record['query_variant']}",
+            f"Visual: {record.get('visual', 'clean')}",
+            f"Framing: {record.get('framing', 'neu')}",
+            f"Ground truth: {record['answer']}",
             "",
         ]
     )
@@ -210,7 +210,7 @@ def render_answer_pages(records: List[Dict[str, Any]]) -> List[Image.Image]:
         y = MARGIN
         draw.text(
             (MARGIN, y),
-            f"答案附录 {page_idx // chunk_size + 1}/{(len(records) + chunk_size - 1) // chunk_size}",
+            f"Answer Appendix {page_idx // chunk_size + 1}/{(len(records) + chunk_size - 1) // chunk_size}",
             fill=(0, 0, 0),
             font=title_font,
         )
@@ -235,7 +235,7 @@ def main() -> None:
     ap.add_argument(
         "--output",
         type=Path,
-        default=Path("outputs/exams_taskd/task_d_r_review_zh.pdf"),
+        default=Path("outputs/exams_taskd/task_d_r_review.pdf"),
         help="Output PDF path",
     )
     args = ap.parse_args()

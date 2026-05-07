@@ -5,7 +5,7 @@ from pathlib import Path
 
 _repo_root = Path(__file__).resolve().parent.parent.parent.parent
 
-# MiniGrid 根目录
+# MiniGrid root directory
 MINIGRID_ROOT = _repo_root / "outputs"
-# 临时文件目录
+# Temporary files directory
 TEMP_ROOT = _repo_root / "scripts" / "02_trajectories" / "tmp"

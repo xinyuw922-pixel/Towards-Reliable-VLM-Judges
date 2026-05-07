@@ -5,9 +5,9 @@ from pathlib import Path
 
 _repo_root = Path(__file__).resolve().parent
 
-# MiniGrid 根目录 (用于 split/composite 等脚本的默认路径)
+# MiniGrid root directory (used by split/composite scripts)
 MINIGRID_ROOT = _repo_root / "outputs"
-# 临时文件目录
+# Temporary files directory
 TEMP_ROOT = _repo_root / "scripts" / "02_trajectories" / "tmp"
-# 仓库根目录
+# Repository root directory
 REPO_ROOT = _repo_root

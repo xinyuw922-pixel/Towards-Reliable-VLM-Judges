@@ -87,19 +87,19 @@ def split_concat_vertical(img: Image.Image) -> tuple[Image.Image, Image.Image]:
     return top, bottom
 
 
-def zh_dir(dir_name: str) -> str:
+def en_dir(dir_name: str) -> str:
     return {
-        "N": "北",
-        "E": "东",
-        "S": "南",
-        "W": "西",
+        "N": "North",
+        "E": "East",
+        "S": "South",
+        "W": "West",
     }.get(dir_name, dir_name)
 
 
-def zh_answer(label: str) -> str:
+def en_answer(label: str) -> str:
     return {
-        "A": "A（可以前进到新位置）",
-        "B": "B（前方被墙挡住，保持原位）",
+        "A": "A (can move forward to new position)",
+        "B": "B (blocked by wall, stays in place)",
     }.get(label, label)
 
 
@@ -110,18 +110,18 @@ def build_cover(records: list[dict[str, Any]], exam_path: Path) -> Image.Image:
     body_font = load_font(38)
 
     y = 380
-    draw.text((MARGIN, y), "Task A-MW 原型人工审计包", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), "Task A-MW Prototype Audit Pack", fill=(0, 0, 0), font=title_font)
     y += 120
-    draw.text((MARGIN, y), "内容：题目图片 + 题干 + 选项 + 标准答案", fill=(40, 40, 40), font=sub_font)
+    draw.text((MARGIN, y), "Content: Question images + prompt + options + ground truth", fill=(40, 40, 40), font=sub_font)
     y += 120
 
     summary = (
-        f"题目来源：{exam_path}\n"
-        f"总题数：{len(records)}\n"
-        "环境：MiniWorld-FourRooms-v0\n"
-        "题型：move_forward 二选一（forward feasibility）\n"
-        "页面展示：左侧 ego，右侧 topview（由拼接图拆开后水平排列）\n"
-        "建议：人工先只看图片和题干做判断，再对照页面下方标准答案。"
+        f"Exam source: {exam_path}\n"
+        f"Total items: {len(records)}\n"
+        "Environment: MiniWorld-FourRooms-v0\n"
+        "Question type: move_forward binary choice (forward feasibility)\n"
+        "Page layout: Left ego, right topview (from concatenated image split)\n"
+        "Suggestion: Judge based on image and prompt first, then check ground truth at bottom."
     )
     add_wrapped_block(draw, MARGIN, y, summary, body_font, PAGE_W - 2 * MARGIN, 56)
     return page
@@ -135,14 +135,14 @@ def render_question_page(record: dict[str, Any], exam_root: Path, idx: int, tota
     answer_font = load_font(38)
 
     y = MARGIN
-    draw.text((MARGIN, y), f"Task A-MW 原型审计  {idx}/{total}", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), f"Task A-MW Prototype Audit  {idx}/{total}", fill=(0, 0, 0), font=title_font)
     y += 86
 
     meta = (
         f"UID: {record['uid']}\n"
-        f"Seed: {record['seed']}    环境: {record['env_task']}    子任务: {record['subtask']}\n"
-        f"动作: {record['action']['name']}    初始朝向: {zh_dir(str(record.get('agent_initial_dir', '')))}"
-        f"（{record.get('agent_initial_dir', '')}）"
+        f"Seed: {record['seed']}    Env: {record['env_task']}    Subtask: {record['subtask']}\n"
+        f"Action: {record['action']['name']}    Initial direction: {en_dir(str(record.get('agent_initial_dir', '')))}"
+        f" ({record.get('agent_initial_dir', '')})"
     )
     y = add_wrapped_block(draw, MARGIN, y, meta, small_font, PAGE_W - 2 * MARGIN, 42)
     y += 18
@@ -163,8 +163,8 @@ def render_question_page(record: dict[str, Any], exam_root: Path, idx: int, tota
     right_panel_x = MARGIN + panel_w + panel_gap
     right_x = right_panel_x + (panel_w - top_fit.width) // 2
 
-    draw.text((MARGIN, y), "左：Ego（第一人称）", fill=(0, 0, 0), font=label_font)
-    draw.text((right_panel_x, y), "右：Top-view（俯视图）", fill=(0, 0, 0), font=label_font)
+    draw.text((MARGIN, y), "Left: Ego (First-person view)", fill=(0, 0, 0), font=label_font)
+    draw.text((right_panel_x, y), "Right: Top-view", fill=(0, 0, 0), font=label_font)
     y += 56
 
     page.paste(ego_fit, (left_x, y))
@@ -172,13 +172,13 @@ def render_question_page(record: dict[str, Any], exam_root: Path, idx: int, tota
     img_block_h = max(ego_fit.height, top_fit.height)
     y += img_block_h + 44
 
-    prompt_title = "题目"
+    prompt_title = "Question"
     draw.text((MARGIN, y), prompt_title, fill=(0, 0, 0), font=title_font)
     y += 72
     y = add_wrapped_block(draw, MARGIN, y, str(record["prompt"]), body_font, PAGE_W - 2 * MARGIN, 48)
     y += 18
 
-    candidates_lines = ["选项："]
+    candidates_lines = ["Options:"]
     for cand in record.get("candidates", []):
         candidates_lines.append(f"{cand['label']}. {cand['value']}")
     y = add_wrapped_block(draw, MARGIN, y, "\n".join(candidates_lines), body_font, PAGE_W - 2 * MARGIN, 48)
@@ -193,9 +193,9 @@ def render_question_page(record: dict[str, Any], exam_root: Path, idx: int, tota
     )
     y += 22
     answer_text = (
-        f"标准答案：{zh_answer(str(record.get('ground_truth', '')))}\n"
-        f"位置是否变化：{'是' if record.get('pos_changed') else '否'}\n"
-        f"动作后朝向：{zh_dir(str(record.get('after_action_dir', '')))}（{record.get('after_action_dir', '')}）"
+        f"Ground truth: {en_answer(str(record.get('ground_truth', '')))}\n"
+        f"Position changed: {'Yes' if record.get('pos_changed') else 'No'}\n"
+        f"Direction after action: {en_dir(str(record.get('after_action_dir', '')))} ({record.get('after_action_dir', '')})"
     )
     add_wrapped_block(draw, MARGIN + 24, y, answer_text, answer_font, PAGE_W - 2 * MARGIN - 48, 54, fill=(140, 0, 0))
     return page
@@ -209,7 +209,7 @@ def main() -> None:
     )
     ap.add_argument(
         "--out_pdf",
-        default="tmp_miniworld/taskA-MW-prototype/taskA-MW-prototype_audit_with_answers_zh.pdf",
+        default="tmp_miniworld/taskA-MW-prototype/taskA-MW-prototype_audit_with_answers.pdf",
     )
     args = ap.parse_args()
 

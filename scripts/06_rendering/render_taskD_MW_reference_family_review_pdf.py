@@ -22,18 +22,18 @@ PAGE_W = 2480
 PAGE_H = 3508
 MARGIN = 120
 
-FAMILY_ZH = {
-    "doorkey": "DoorKey / 钥匙开门",
-    "multiroom": "MultiRoom / 多房间",
-    "redblue": "RedBlue / 红蓝门",
+FAMILY_NAMES = {
+    "doorkey": "DoorKey",
+    "multiroom": "MultiRoom",
+    "redblue": "RedBlue",
 }
 
-DIFFICULTY_ZH = {
-    "easy": "简单",
-    "medium": "中等",
-    "hard": "较难",
-    "structural": "结构增强",
-    "structural_v2": "结构增强 v2",
+DIFFICULTY_NAMES = {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "structural": "Structural",
+    "structural_v2": "Structural v2",
 }
 
 
@@ -83,12 +83,12 @@ def load_records(path: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def zh_family(family: str) -> str:
-    return FAMILY_ZH.get(family, family)
+def get_family_name(family: str) -> str:
+    return FAMILY_NAMES.get(family, family)
 
 
-def zh_difficulty(difficulty: str) -> str:
-    return DIFFICULTY_ZH.get(difficulty, difficulty)
+def get_difficulty_name(difficulty: str) -> str:
+    return DIFFICULTY_NAMES.get(difficulty, difficulty)
 
 
 def render_cover(records: list[dict[str, Any]], exam_path: Path) -> Image.Image:
@@ -97,18 +97,18 @@ def render_cover(records: list[dict[str, Any]], exam_path: Path) -> Image.Image:
     sub_font = load_font(42)
     body_font = load_font(42)
 
-    draw.text((MARGIN, 380), "Task D-MW-RF 中文审阅包", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, 380), "Task D-MW-RF Review Pack", fill=(0, 0, 0), font=title_font)
     draw.text((MARGIN, 490), "Reference-Family MiniWorld Pilot", fill=(40, 40, 40), font=sub_font)
 
     text = (
-        f"题目总数：{len(records)}\n"
-        f"题库路径：{exam_path}\n\n"
-        "设计思路：\n"
-        "每个任务 family 先给一个最简单的已知成功例子作为参考轨迹，"
-        "再让模型判断中等、较难、结构增强等 query 轨迹是否也完成同一任务目标。\n\n"
-        "注意：\n"
-        "这条线更接近 reference-aided family judgment，"
-        "不是严格 SSOT 主线 Task D 的最终合同。"
+        f"Total items: {len(records)}\n"
+        f"Exam path: {exam_path}\n\n"
+        "Design rationale:\n"
+        "For each task family, first provide the simplest known-success example as reference trajectory,\n"
+        "then judge whether medium/hard/structural query trajectories also complete the same task goal.\n\n"
+        "Note:\n"
+        "This track is closer to reference-aided family judgment,\n"
+        "not the strict SSOT mainline Task D final contract."
     )
     add_wrapped(draw, MARGIN, 680, text, body_font, PAGE_W - 2 * MARGIN, 60)
     return page
@@ -118,14 +118,14 @@ def render_instruction_page() -> Image.Image:
     page, draw = create_blank_page()
     title_font = load_font(58)
     body_font = load_font(38)
-    draw.text((MARGIN, MARGIN), "说明页", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, MARGIN), "Instructions", fill=(0, 0, 0), font=title_font)
     text = (
-        "每道题由上下两部分组成：\n"
-        "1. 上方是 Reference：一个已知成功的最简单例子。\n"
-        "2. 下方是 Query：来自同一任务 family、但路径更复杂的轨迹。\n\n"
-        "你的任务是判断：\n"
-        "Query 是否也完成了与 Reference 相同的任务目标。\n\n"
-        "答题要求：只能输出 Success 或 Fail。"
+        "Each question consists of two parts:\n"
+        "1. Top is Reference: the simplest known-success example.\n"
+        "2. Bottom is Query: trajectory from the same task family but with more complex path.\n\n"
+        "Your task:\n"
+        "Judge whether the Query also completes the same task goal as the Reference.\n\n"
+        "Answer requirement: Output only Success or Fail."
     )
     add_wrapped(draw, MARGIN, 240, text, body_font, PAGE_W - 2 * MARGIN, 54)
     return page
@@ -137,16 +137,16 @@ def render_question_page(record: dict[str, Any], idx: int, total: int, exam_root
     meta_font = load_font(32)
 
     y = MARGIN
-    draw.text((MARGIN, y), f"题目 {idx}/{total}", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), f"Question {idx}/{total}", fill=(0, 0, 0), font=title_font)
     y += 80
     lines = [
-        f"family：{zh_family(record['family'])}",
-        f"reference：{record['reference_template_id']} / {zh_difficulty(str(record['reference_difficulty']))}",
-        f"query：{record['query_template_id']} / {zh_difficulty(str(record['query_difficulty']))}",
-        f"query variant：{record['query_variant']}",
+        f"Family: {get_family_name(record['family'])}",
+        f"Reference: {record['reference_template_id']} / {get_difficulty_name(str(record['reference_difficulty']))}",
+        f"Query: {record['query_template_id']} / {get_difficulty_name(str(record['query_difficulty']))}",
+        f"Query variant: {record['query_variant']}",
         "",
-        "判断下方 Query 是否也完成了与上方 Reference 相同的任务目标。",
-        "答案只能写：Success 或 Fail。",
+        "Judge whether the bottom Query also completes the same task goal as the top Reference.",
+        "Answer format: Success or Fail.",
     ]
     for line in lines:
         draw.text((MARGIN, y), line, fill=(20, 20, 20), font=meta_font)
@@ -171,13 +171,13 @@ def render_answer_pages(records: list[dict[str, Any]]) -> list[Image.Image]:
         chunk = records[start:start + chunk_size]
         page, draw = create_blank_page()
         y = MARGIN
-        draw.text((MARGIN, y), f"答案附录 {start // chunk_size + 1}", fill=(0, 0, 0), font=title_font)
+        draw.text((MARGIN, y), f"Answer Appendix {start // chunk_size + 1}", fill=(0, 0, 0), font=title_font)
         y += 90
         for record in chunk:
             block = (
                 f"{record['exam_id']}\n"
-                f"{zh_family(record['family'])} | {record['query_template_id']} | {record['query_variant']}\n"
-                f"标准答案：{record['answer']}\n"
+                f"{get_family_name(record['family'])} | {record['query_template_id']} | {record['query_variant']}\n"
+                f"Ground truth: {record['answer']}\n"
             )
             y = add_wrapped(draw, MARGIN, y, block, body_font, PAGE_W - 2 * MARGIN, 40)
             y += 20
@@ -188,14 +188,14 @@ def render_answer_pages(records: list[dict[str, Any]]) -> list[Image.Image]:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Render Chinese review PDF for MiniWorld reference-family showcase")
+    ap = argparse.ArgumentParser(description="Render review PDF for MiniWorld reference-family showcase")
     ap.add_argument(
         "--exam",
         default="tmp_miniworld/taskD-MW-reference-family-showcase/task_d_mw_reference_family_exam.jsonl",
     )
     ap.add_argument(
         "--output",
-        default="tmp_miniworld/taskD-MW-reference-family-showcase/task_d_mw_reference_family_review_zh.pdf",
+        default="tmp_miniworld/taskD-MW-reference-family-showcase/task_d_mw_reference_family_review.pdf",
     )
     args = ap.parse_args()
 

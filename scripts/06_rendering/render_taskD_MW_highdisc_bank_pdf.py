@@ -22,10 +22,10 @@ PAGE_W = 2480
 PAGE_H = 3508
 MARGIN = 120
 
-FAMILY_ZH = {
-    "doorkey": "DoorKey / 钥匙开门",
-    "multiroom": "MultiRoom / 多房间",
-    "redblue": "RedBlue / 红蓝门",
+FAMILY_NAMES = {
+    "doorkey": "DoorKey",
+    "multiroom": "MultiRoom",
+    "redblue": "RedBlue",
 }
 
 
@@ -70,19 +70,19 @@ def render_cover(rows: list[dict[str, Any]], round1_summary: Path, round2_summar
         family = str(row["family"])
         family_counts[family] = family_counts.get(family, 0) + 1
 
-    draw.text((MARGIN, 340), "Task D-MW 高区分度模板统一审阅包", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, 340), "Task D-MW High-Discriminability Template Unified Review Pack", fill=(0, 0, 0), font=title_font)
     draw.text((MARGIN, 450), "Round 1 + Round 2 Combined Review", fill=(40, 40, 40), font=sub_font)
     body = (
-        f"模板总数：{len(rows)}\n"
-        f"DoorKey：{family_counts.get('doorkey', 0)}\n"
-        f"MultiRoom：{family_counts.get('multiroom', 0)}\n"
-        f"RedBlue：{family_counts.get('redblue', 0)}\n\n"
-        f"Round 1 汇总：{round1_summary}\n"
-        f"Round 2 汇总：{round2_summary}\n\n"
-        "设计原则：\n"
-        "优先保留成功/失败分叉明显、结构差异清楚、几乎不依赖 clutter 的高区分度模板。\n\n"
-        "阅读方式：\n"
-        "每页上方是 full，下方是 cf。重点看两者在关键门、关键转向和终点房上的视觉差异是否足够显眼。"
+        f"Total templates: {len(rows)}\n"
+        f"DoorKey: {family_counts.get('doorkey', 0)}\n"
+        f"MultiRoom: {family_counts.get('multiroom', 0)}\n"
+        f"RedBlue: {family_counts.get('redblue', 0)}\n\n"
+        f"Round 1 summary: {round1_summary}\n"
+        f"Round 2 summary: {round2_summary}\n\n"
+        "Design principle:\n"
+        "Prioritize high-discriminability templates with clear success/failure bifurcation and structural differences, minimally relying on clutter.\n\n"
+        "Reading guide:\n"
+        "Each page shows full on top and cf on bottom. Focus on whether the visual differences at key doors, key turns, and goal rooms are sufficiently obvious."
     )
     y = 640
     for line in body.split("\n"):
@@ -98,15 +98,15 @@ def render_question_page(row: dict[str, Any], idx: int, total: int) -> Image.Ima
     section_font = load_font(40)
 
     y = MARGIN
-    draw.text((MARGIN, y), f"模板 {idx}/{total}", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), f"Template {idx}/{total}", fill=(0, 0, 0), font=title_font)
     y += 78
-    draw.text((MARGIN, y), f"family：{FAMILY_ZH.get(str(row['family']), str(row['family']))}", fill=(20, 20, 20), font=meta_font)
+    draw.text((MARGIN, y), f"Family: {FAMILY_NAMES.get(str(row['family']), str(row['family']))}", fill=(20, 20, 20), font=meta_font)
     y += 42
-    draw.text((MARGIN, y), f"template：{row['template_id']}", fill=(20, 20, 20), font=meta_font)
+    draw.text((MARGIN, y), f"Template ID: {row['template_id']}", fill=(20, 20, 20), font=meta_font)
     y += 42
-    draw.text((MARGIN, y), f"来源：{row['source_round']}", fill=(20, 20, 20), font=meta_font)
+    draw.text((MARGIN, y), f"Source: {row['source_round']}", fill=(20, 20, 20), font=meta_font)
     y += 42
-    draw.text((MARGIN, y), f"说明：{row['note']}", fill=(20, 20, 20), font=meta_font)
+    draw.text((MARGIN, y), f"Note: {row['note']}", fill=(20, 20, 20), font=meta_font)
     y += 52
 
     root = Path(str(row["summary_dir"]))
@@ -116,13 +116,13 @@ def render_question_page(row: dict[str, Any], idx: int, total: int) -> Image.Ima
     max_w = PAGE_W - 2 * MARGIN
     panel_h = (PAGE_H - y - MARGIN - 120) // 2
 
-    draw.text((MARGIN, y), "Full / 成功轨迹", fill=(0, 0, 0), font=section_font)
+    draw.text((MARGIN, y), "Full / Success Trajectory", fill=(0, 0, 0), font=section_font)
     y += 54
     full_fit = fit_contain(full_img, max_w, panel_h - 54)
     page.paste(full_fit, ((PAGE_W - full_fit.width) // 2, y))
     y += panel_h
 
-    draw.text((MARGIN, y), "CF / 失败轨迹", fill=(0, 0, 0), font=section_font)
+    draw.text((MARGIN, y), "CF / Failure Trajectory", fill=(0, 0, 0), font=section_font)
     y += 54
     cf_fit = fit_contain(cf_img, max_w, panel_h - 54)
     page.paste(cf_fit, ((PAGE_W - cf_fit.width) // 2, y))
@@ -134,12 +134,12 @@ def render_answer_page(rows: list[dict[str, Any]]) -> Image.Image:
     title_font = load_font(54)
     body_font = load_font(32)
     y = MARGIN
-    draw.text((MARGIN, y), "答案附录", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), "Answer Appendix", fill=(0, 0, 0), font=title_font)
     y += 90
     for row in rows:
         lines = [
             f"{row['template_id']} ({row['source_round']})",
-            f"{FAMILY_ZH.get(str(row['family']), str(row['family']))}",
+            f"{FAMILY_NAMES.get(str(row['family']), str(row['family']))}",
             f"full = Success, cf = Fail, pair_ok = {row['pair_ok']}",
             "",
         ]
@@ -162,7 +162,7 @@ def main() -> None:
     )
     ap.add_argument(
         "--output",
-        default="tmp_miniworld/taskD-MW-highdisc-expansion-bank/taskD_MW_highdisc_bank_review_zh.pdf",
+        default="tmp_miniworld/taskD-MW-highdisc-expansion-bank/taskD_MW_highdisc_bank_review.pdf",
     )
     args = ap.parse_args()
 

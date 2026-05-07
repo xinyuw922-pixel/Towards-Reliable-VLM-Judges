@@ -41,8 +41,7 @@ def load_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
             except Exception:
                 continue
     raise RuntimeError(
-        "未找到可用的中文字体，无法生成中文审计 PDF。"
-        "请确认系统中存在 msyh / NotoSansCJK / 文泉驿 等中文字体。"
+        "No suitable font found. Please ensure msyh / NotoSansCJK / DejaVu fonts are available."
     )
 
 
@@ -172,36 +171,36 @@ def overlay_topview_grid(concat_img: Image.Image, record: dict[str, Any]) -> Ima
     return out
 
 
-def zh_seq(seq: list[str]) -> str:
+def en_seq(seq: list[str]) -> str:
     mapping = {
-        "turn_left_30": "左转一单位",
-        "turn_right_30": "右转一单位",
-        "turn_left_60": "左转两单位",
-        "turn_right_60": "右转两单位",
-        "forward_5": "前进一步",
-        "forward_10": "前进两步",
+        "turn_left_30": "Turn left (1 unit)",
+        "turn_right_30": "Turn right (1 unit)",
+        "turn_left_60": "Turn left (2 units)",
+        "turn_right_60": "Turn right (2 units)",
+        "forward_5": "Forward (1 unit)",
+        "forward_10": "Forward (2 units)",
     }
-    return " → ".join(mapping.get(a, a) for a in seq)
+    return " -> ".join(mapping.get(a, a) for a in seq)
 
 
 def en_prompt(record: dict[str, Any]) -> str:
     return str(record.get("prompt", "")).strip()
 
 
-def zh_prompt(record: dict[str, Any]) -> str:
-    actions = zh_seq(record["action_sequence"])
+def en_prompt_translation(record: dict[str, Any]) -> str:
+    actions = en_seq(record["action_sequence"])
     return (
-        "任务：判断真实的后继状态。\n"
-        "你将看到智能体的当前状态，以及候选 A / B 两张后继视图。\n"
-        "本题采用以下人工审题单位：\n"
-        "1. 前进一步 = 原环境中连续前进 5 个小步。\n"
-        "2. 左转一单位 / 右转一单位 = 30°。\n"
-        "3. 左转两单位 / 右转两单位 = 60°。\n"
-        "俯视图中的网格与该距离单位一致：1 个网格单元 = 前进一步。\n"
-        f"请从当前状态出发，按顺序执行动作序列：[{actions}]。\n"
-        "不需要换算真实米数，只需根据相对位移和朝向变化进行判断。\n"
-        "问题：在完整执行该动作序列后，候选 A 和候选 B 中哪一张是真实后继状态？\n"
-        "作答要求：只回答一个字母 A 或 B。"
+        "Task: Judge the true successor state.\n"
+        "You will see the agent's current state and two successor views A and B.\n"
+        "This question uses the following human-review unit conventions:\n"
+        "1. Forward 1 unit = 5 primitive forward steps in the original environment.\n"
+        "2. Turn left/right 1 unit = 30 degrees.\n"
+        "3. Turn left/right 2 units = 60 degrees.\n"
+        "The topview grid aligns with these distance units: 1 grid cell = 1 unit.\n"
+        f"Please execute the action sequence in order from the current state: [{actions}].\n"
+        "No need to convert to real meters; judge based on relative displacement and orientation changes.\n"
+        "Question: After fully executing this action sequence, which of candidate A or candidate B is the true successor state?\n"
+        "Answer requirement: Output only a single letter A or B."
     )
 
 
@@ -236,28 +235,28 @@ def build_cover(
     body_font = load_font(38)
 
     y = 280
-    mode_label = "（盲审版 — 不含答案）" if mode == "blind" else "（答案版 — 含标准答案）"
+    mode_label = "(Blind Review)" if mode == "blind" else "(Answer Key Version)"
     exam_label = infer_exam_label(exam_path)
     env_label = infer_env_label(records)
     draw.text(
         (MARGIN, y),
-        f"Task A-MW v2 审计包 {mode_label}",
+        f"Task A-MW v2 Audit Pack {mode_label}",
         fill=(0, 0, 0),
         font=title_font,
     )
     y += 110
     draw.text(
         (MARGIN, y),
-        "题型：后继状态选择（Successor State Choice）",
+        "Question Type: Successor State Choice",
         fill=(0, 0, 0),
         font=sub_font,
     )
     y += 90
 
     content_note = (
-        "每页内容：当前状态图（ego+俯瞰图） + 候选A图（仅ego） + 候选B图（仅ego） + 动作序列"
+        "Page content: Current state (ego+topview) + Candidate A (ego only) + Candidate B (ego only) + Action sequence"
         if mode == "blind"
-        else "每页内容：当前状态图（ego+俯瞰图） + 候选A图（仅ego） + 候选B图（仅ego） + 动作序列 + 正确答案 + 干扰序列"
+        else "Page content: Current state (ego+topview) + Candidate A (ego only) + Candidate B (ego only) + Action sequence + Correct answer + Distractor sequence"
     )
     draw.text((MARGIN, y), content_note, fill=(40, 40, 40), font=sub_font)
     y += 120
@@ -277,22 +276,22 @@ def build_cover(
     b_count = sum(1 for r in records if r["ground_truth"] == "B")
 
     summary_lines = [
-        f"题目来源：{exam_path}",
-        f"题库标识：{exam_label}",
-        f"总题数：{len(records)}（A={a_count} / B={b_count}）",
-        f"环境：{env_label}",
-        "当前状态图：ego_topview_concat（上=ego第一人称，下=topview俯视图）",
-        "候选后继图：仅显示 ego 第一人称视角，不显示候选 topview。",
-        "题面说明：每题提供英文正式版题干，并附中文翻译。",
-        "人工审题单位：前进一步 = 原环境连续前进 5 个小步；左/右转一单位 = 30°；左/右转两单位 = 60°。",
-        "俯视图比例网格：1 格 = 新单位下的前进一步。",
-        f"难度分布：{dict(sorted(bucket_counts.items()))}（easy = 当前房间含红色方块；hard = 当前房间不含红色方块）",
-        f"干扰策略分布：{dict(sorted(strat_counts.items()))}",
-        f"动作序列长度分布：{dict(sorted(seq_lengths.items()))}",
+        f"Exam source: {exam_path}",
+        f"Exam label: {exam_label}",
+        f"Total items: {len(records)} (A={a_count} / B={b_count})",
+        f"Environment: {env_label}",
+        "Current state: ego_topview_concat (top=ego first-person, bottom=topview)",
+        "Candidate successor: Ego first-person view only, no candidate topview.",
+        "Question text: English version provided for each item.",
+        "Human-review unit: Forward 1 unit = 5 primitive forward steps; Turn left/right 1 unit = 30 degrees; Turn left/right 2 units = 60 degrees.",
+        "Topview grid: 1 cell = 1 unit forward.",
+        f"Difficulty distribution: {dict(sorted(bucket_counts.items()))} (easy = current room contains red block; hard = current room has no red block)",
+        f"Distractor strategy distribution: {dict(sorted(strat_counts.items()))}",
+        f"Action sequence length distribution: {dict(sorted(seq_lengths.items()))}",
         (
-            "盲审说明：请先不看答案，根据当前图+动作序列判断A/B哪个更可能是真后继。"
+            "Blind review: Please judge which of A/B is more likely the true successor without looking at the answer."
             if mode == "blind"
-            else "答案版说明：含标准答案和干扰序列，仅供复核使用。"
+            else "Answer key version: Contains correct answer and distractor sequence, for verification only."
         ),
     ]
     y = add_wrapped_block(
@@ -314,7 +313,7 @@ def render_question_page(
     answer_font = load_font(38)
 
     y = MARGIN
-    mode_tag = "[盲审]" if mode == "blind" else "[答案版]"
+    mode_tag = "[Blind]" if mode == "blind" else "[Answer Key]"
     draw.text(
         (MARGIN, y),
         f"Task A-MW v2  {mode_tag}  {idx}/{total}",
@@ -324,9 +323,9 @@ def render_question_page(
     y += 80
 
     meta = (
-        f"UID: {record['uid']}    Seed: {record['seed']}    环境: {record['env_task']}"
-        f"    难度: {record.get('difficulty_bucket', 'unknown')}"
-        f"    干扰策略: {record.get('distractor_strategy', 'unknown')}"
+        f"UID: {record['uid']}    Seed: {record['seed']}    Env: {record['env_task']}"
+        f"    Difficulty: {record.get('difficulty_bucket', 'unknown')}"
+        f"    Distractor Strategy: {record.get('distractor_strategy', 'unknown')}"
     )
     draw.text((MARGIN, y), meta, fill=(60, 60, 60), font=small_font)
     y += 44
@@ -356,7 +355,7 @@ def render_question_page(
     page.paste(current_fit, (MARGIN, y))
     draw.text(
         (MARGIN, y + current_fit.height + 12),
-        "当前状态图（Current State — 执行动作序列前的状态）",
+        "Current State (Before executing action sequence)",
         fill=(60, 60, 60),
         font=label_font,
     )
@@ -377,13 +376,13 @@ def render_question_page(
 
     draw.text(
         (cand_a_x, y),
-        "候选 A（仅第一人称后继图）",
+        "Candidate A (Ego successor only)",
         fill=(0, 0, 0),
         font=label_font,
     )
     draw.text(
         (cand_b_x, y),
-        "候选 B（仅第一人称后继图）",
+        "Candidate B (Ego successor only)",
         fill=(0, 0, 0),
         font=label_font,
     )
@@ -400,13 +399,13 @@ def render_question_page(
     seq_font = load_font(34)
     draw.text(
         (MARGIN, y),
-        "动作序列（执行以下动作后，哪张候选图是真实后继？）",
+        "Action Sequence (Which candidate matches the true result after executing these actions?)",
         fill=(0, 0, 0),
         font=title_font,
     )
     y += 60
 
-    correct_seq_str = "正确序列：" + zh_seq(record["action_sequence"])
+    correct_seq_str = "Correct sequence: " + en_seq(record["action_sequence"])
     draw.text(
         (MARGIN, y), correct_seq_str, fill=(0, 80, 160), font=seq_font
     )
@@ -414,7 +413,7 @@ def render_question_page(
 
     # Only show distractor sequence in answer-key mode
     if mode == "answer-key":
-        dist_seq_str = "干扰序列：" + zh_seq(record["distractor_sequence"])
+        dist_seq_str = "Distractor sequence: " + en_seq(record["distractor_sequence"])
         draw.text(
             (MARGIN, y), dist_seq_str, fill=(120, 120, 120), font=seq_font
         )
@@ -429,10 +428,10 @@ def render_question_page(
         draw, MARGIN, y, en_prompt(record), prompt_font, content_w, 38
     )
     y += 18
-    draw.text((MARGIN, y), "中文翻译：", fill=(0, 0, 0), font=body_font)
+    draw.text((MARGIN, y), "Question (Chinese Translation):", fill=(0, 0, 0), font=body_font)
     y += 40
     y = add_wrapped_block(
-        draw, MARGIN, y, zh_prompt(record), prompt_font, content_w, 38
+        draw, MARGIN, y, en_prompt_translation(record), prompt_font, content_w, 38
     )
     y += 20
 
@@ -455,11 +454,11 @@ def render_question_page(
         gt = record["ground_truth"]
         cc = record["correct_candidate"]
         answer_text = (
-            f"标准答案：{gt}（正确候选 = {cc}）\n"
-            f"正确候选位置：{record['correct_candidate_agent_pos']}  朝向：{record['correct_candidate_agent_cardinal']}\n"
-            f"干扰候选位置：{record['distractor_candidate_agent_pos']}  朝向：{record['distractor_candidate_agent_cardinal']}\n"
-            f"当前状态位置：{record['current_agent_pos']}  朝向：{record['current_agent_cardinal']}\n"
-            f"干扰来源：{record['distractor_source']}  策略：{record['distractor_strategy']}"
+            f"Ground truth: {gt} (Correct candidate = {cc})\n"
+            f"Correct candidate position: {record['correct_candidate_agent_pos']}  Direction: {record['correct_candidate_agent_cardinal']}\n"
+            f"Distractor candidate position: {record['distractor_candidate_agent_pos']}  Direction: {record['distractor_candidate_agent_cardinal']}\n"
+            f"Current state position: {record['current_agent_pos']}  Direction: {record['current_agent_cardinal']}\n"
+            f"Distractor source: {record['distractor_source']}  Strategy: {record['distractor_strategy']}"
         )
         add_wrapped_block(
             draw,
@@ -520,15 +519,15 @@ def main() -> None:
     exam_label = infer_exam_label(exam_path)
 
     mode_str = "blind" if args.mode == "blind" else "audit_with_answers"
-    out_pdf = out_dir / f"{exam_label}_{mode_str}_zh.pdf"
+    out_pdf = out_dir / f"{exam_label}_{mode_str}.pdf"
     render_pdf(exam_path, out_pdf, args.mode)
 
     # If no explicit mode specified, also generate the other one
     if args.mode != "blind":
-        blind_out = out_dir / f"{exam_label}_blind_zh.pdf"
+        blind_out = out_dir / f"{exam_label}_blind.pdf"
         render_pdf(exam_path, blind_out, "blind")
     if args.mode != "answer-key":
-        ak_out = out_dir / f"{exam_label}_audit_with_answers_zh.pdf"
+        ak_out = out_dir / f"{exam_label}_audit_with_answers.pdf"
         render_pdf(exam_path, ak_out, "answer-key")
 
 

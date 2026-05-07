@@ -22,10 +22,10 @@ PAGE_W = 2480
 PAGE_H = 3508
 MARGIN = 120
 
-FAMILY_ZH = {
-    "doorkey": "DoorKey / 钥匙开门",
-    "multiroom": "MultiRoom / 多房间",
-    "redblue": "RedBlue / 红蓝门",
+FAMILY_NAMES = {
+    "doorkey": "DoorKey",
+    "multiroom": "MultiRoom",
+    "redblue": "RedBlue",
 }
 
 
@@ -58,16 +58,16 @@ def render_cover(rows: list[dict[str, Any]], exam_path: Path) -> Image.Image:
     page, draw = create_blank_page()
     title_font = load_font(72)
     body_font = load_font(42)
-    draw.text((MARGIN, 360), "Task C-MW 原型审阅包", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, 360), "Task C-MW Prototype Review Pack", fill=(0, 0, 0), font=title_font)
     text = (
-        f"题目总数：{len(rows)}\n"
-        f"题库路径：{exam_path}\n\n"
-        "设计目标：\n"
-        "这一版不是连续全帧 Task D，而是只保留关键事件帧与最后两帧的 variable-K 稀疏 keyframe Task C 原型。\n"
-        "当前先验证 DoorKey / MultiRoom / RedBlue 三个 family 的 sparse storyboard 是否成立。\n"
-        "提示词已对齐 MiniGrid Task C 的 Task goal + Yes/No 风格。\n\n"
-        "当前变体：full / nocue / cf\n"
-        "nocue 说明：按帧重渲染并临时隐藏重复证据，不使用后处理遮挡"
+        f"Total items: {len(rows)}\n"
+        f"Exam path: {exam_path}\n\n"
+        "Design goal:\n"
+        "This version is not continuous full-frame Task D, but rather a variable-K sparse keyframe Task C prototype retaining only key event frames and the last two frames.\n"
+        "First validate whether sparse storyboards work for DoorKey / MultiRoom / RedBlue families.\n"
+        "Prompts aligned with MiniGrid Task C task goal + Yes/No style.\n\n"
+        "Current variants: full / nocue / cf\n"
+        "Nocue note: re-rendered per frame with temporary evidence hiding, no post-processing occlusion used."
     )
     y = 560
     for line in text.split("\n"):
@@ -82,14 +82,14 @@ def render_question_page(row: dict[str, Any], idx: int, total: int, root: Path) 
     meta_font = load_font(32)
     steps_font = load_font(30)
     y = MARGIN
-    draw.text((MARGIN, y), f"原型 {idx}/{total}", fill=(0, 0, 0), font=title_font)
+    draw.text((MARGIN, y), f"Prototype {idx}/{total}", fill=(0, 0, 0), font=title_font)
     y += 74
     lines = [
-        f"family：{FAMILY_ZH.get(str(row['family']), str(row['family']))}",
-        f"template：{row['template_id']}",
-        f"variant：{row['variant']}",
-        f"k_frame：{row['k_frame']}",
-        f"prompt：{row.get('prompt_version', 'n/a')}",
+        f"Family: {FAMILY_NAMES.get(str(row['family']), str(row['family']))}",
+        f"Template: {row['template_id']}",
+        f"Variant: {row['variant']}",
+        f"K-frame: {row['k_frame']}",
+        f"Prompt: {row.get('prompt_version', 'n/a')}",
     ]
     for line in lines:
         draw.text((MARGIN, y), line, fill=(20, 20, 20), font=meta_font)
@@ -99,7 +99,7 @@ def render_question_page(row: dict[str, Any], idx: int, total: int, root: Path) 
         draw.text((MARGIN, y), task_goal, fill=(20, 20, 20), font=meta_font)
         y += 44
     if row.get("variant") == "nocue" and row.get("nocue_meta"):
-        draw.text((MARGIN, y), f"nocue：{row['nocue_meta'].get('strategy')}", fill=(20, 20, 20), font=meta_font)
+        draw.text((MARGIN, y), f"Nocue: {row['nocue_meta'].get('strategy')}", fill=(20, 20, 20), font=meta_font)
         y += 44
     steps_text = f"selected_steps: {row['selected_steps']}"
     draw.rounded_rectangle((MARGIN, y, PAGE_W - MARGIN, y + 52), radius=14, fill=(245, 245, 245), outline=(210, 210, 210), width=2)
@@ -119,7 +119,7 @@ def main() -> None:
     )
     ap.add_argument(
         "--output",
-        default="tmp_miniworld/taskC-MW-family-prototypes/taskC_MW_family_prototypes_review_zh_v12.pdf",
+        default="tmp_miniworld/taskC-MW-family-prototypes/taskC_MW_family_prototypes_review.pdf",
     )
     args = ap.parse_args()
 

@@ -23,20 +23,20 @@ PAGE_W = 2000
 PAGE_H = 2828
 MARGIN = 90
 
-FAMILY_ZH = {
-    "doorkey": "DoorKey / 钥匙开门",
-    "multiroom": "MultiRoom / 多房间",
-    "redblue": "RedBlue / 红蓝门",
+FAMILY_NAMES = {
+    "doorkey": "DoorKey",
+    "multiroom": "MultiRoom",
+    "redblue": "RedBlue",
 }
 
-DIFFICULTY_ZH = {
-    "structural": "结构增强",
-    "structural_v2": "结构增强 v2",
+DIFFICULTY_NAMES = {
+    "structural": "Structural",
+    "structural_v2": "Structural v2",
 }
 
-INTERVENTION_ZH = {
-    "remove_key": "移除钥匙",
-    "lock_gate2_forever": "第二扇门永久锁定",
+INTERVENTION_NAMES = {
+    "remove_key": "Remove key",
+    "lock_gate2_forever": "Second door permanently locked",
 }
 
 
@@ -110,12 +110,12 @@ def fit_contain(
     return canvas
 
 
-def zh_family(family: str) -> str:
-    return FAMILY_ZH.get(family, family)
+def get_family_name(family: str) -> str:
+    return FAMILY_NAMES.get(family, family)
 
 
-def zh_difficulty(difficulty: str) -> str:
-    return DIFFICULTY_ZH.get(difficulty, difficulty)
+def get_difficulty_name(difficulty: str) -> str:
+    return DIFFICULTY_NAMES.get(difficulty, difficulty)
 
 
 def load_summary(path: Path) -> list[dict[str, Any]]:
@@ -144,56 +144,56 @@ def build_cover(rows: list[dict[str, Any]], mode: str, summary_path: Path) -> Im
     sub_font = load_font(42)
     body_font = load_font(34)
 
-    draw.text((MARGIN, 120), "MiniWorld Task D 结构增强试卷", font=title_font, fill=(0, 0, 0))
-    mode_label = "盲审版" if mode == "blind" else "答案版"
+    draw.text((MARGIN, 120), "MiniWorld Task D Structural Enhancement Exam Pack", font=title_font, fill=(0, 0, 0))
+    mode_label = "Blind Review" if mode == "blind" else "Answer Key"
     draw.text((MARGIN, 230), mode_label, font=sub_font, fill=(0, 0, 0))
 
     lines = [
-        f"数据索引：{summary_path}",
-        f"题目总数：{len(rows)}",
+        f"Data index: {summary_path}",
+        f"Total items: {len(rows)}",
         "",
-        "本试卷仅展示结构增强版本：",
-        "在保持事件规则不变的前提下，提高房间拓扑复杂度，并加入额外转角。",
+        "This exam pack only shows structural enhancement versions:",
+        "Keeping event rules unchanged while increasing room topology complexity and adding extra turns.",
         "",
-        "本版采用逐帧 square montage 排版，尽量避免细长 storyboard 在页面中被压缩。",
+        "This version uses per-frame square montage layout to avoid thin storyboards being compressed on page.",
         "",
-        "盲审版：",
-        "只展示 full 轨迹的方阵式连续帧，不显示答案。",
+        "Blind review:",
+        "Shows only full trajectory square montage, no answers.",
         "",
-        "答案版：",
-        "展示 full / cf 的方阵式连续帧、关键事件覆盖图和事件步信息。",
+        "Answer key:",
+        "Shows full/cf square montages, key event coverage maps, and event step info.",
     ]
     add_wrapped_text(draw, MARGIN, 340, "\n".join(lines), body_font, PAGE_W - 2 * MARGIN, 48)
 
     y = 960
     for row in rows:
-        line = f"{zh_family(row['family'])} / {zh_difficulty(str(row['layout_metadata'].get('difficulty', '')))} / {row['template_id']}"
+        line = f"{get_family_name(row['family'])} / {get_difficulty_name(str(row['layout_metadata'].get('difficulty', '')))} / {row['template_id']}"
         y = add_wrapped_text(draw, MARGIN, y, line, body_font, PAGE_W - 2 * MARGIN, 44)
         y += 10
     return page
 
 
 def build_prompt_block(row: dict[str, Any], *, blind: bool) -> str:
-    family = zh_family(row["family"])
-    difficulty = zh_difficulty(str(row["layout_metadata"].get("difficulty", "unknown")))
+    family = get_family_name(row["family"])
+    difficulty = get_difficulty_name(str(row["layout_metadata"].get("difficulty", "unknown")))
     note = row.get("note", "")
     lines = [
-        f"环境家族：{family}",
-        f"难度：{difficulty}",
-        f"模板名：{row['template_id']}",
-        f"说明：{note}",
+        f"Environment family: {family}",
+        f"Difficulty: {difficulty}",
+        f"Template name: {row['template_id']}",
+        f"Note: {note}",
         "",
-        "题目：判断这条连续帧轨迹是否成功完成任务。",
-        "作答要求：只输出一个英文单词：SUCCESS 或 FAIL。",
+        "Question: Judge whether this trajectory successfully completes the task.",
+        "Answer requirement: Output only one English word: SUCCESS or FAIL.",
     ]
     if not blind:
         lines.extend(
             [
                 "",
-                f"配对是否合格：{row['pair_ok']}",
-                f"cf 干预方式：{INTERVENTION_ZH.get(row['cf_intervention'], row['cf_intervention'])}",
-                f"full 事件步：{row['full_event_steps']}",
-                f"cf 事件步：{row['cf_event_steps']}",
+                f"Pair valid: {row['pair_ok']}",
+                f"CF intervention: {INTERVENTION_NAMES.get(row['cf_intervention'], row['cf_intervention'])}",
+                f"Full event steps: {row['full_event_steps']}",
+                f"CF event steps: {row['cf_event_steps']}",
             ]
         )
     return "\n".join(lines)
@@ -251,7 +251,7 @@ def build_row_page(row: dict[str, Any], *, root: Path, mode: str) -> Image.Image
     body_font = load_font(30)
     small_font = load_font(24)
 
-    title = f"{zh_family(row['family'])} / {zh_difficulty(str(row['layout_metadata'].get('difficulty', '')))} / {row['template_id']}"
+    title = f"{get_family_name(row['family'])} / {get_difficulty_name(str(row['layout_metadata'].get('difficulty', '')))} / {row['template_id']}"
     draw.text((MARGIN, 70), title, font=title_font, fill=(0, 0, 0))
 
     prompt_y = 150
@@ -273,7 +273,7 @@ def build_row_page(row: dict[str, Any], *, root: Path, mode: str) -> Image.Image
 
     if blind:
         page.paste(full_montage, ((PAGE_W - full_montage.width) // 2, 620))
-        draw.text((MARGIN, 560), "Full 连续帧方阵图", font=body_font, fill=(0, 0, 0))
+        draw.text((MARGIN, 560), "Full Trajectory Square Montage", font=body_font, fill=(0, 0, 0))
         return page
 
     cf_manifest = load_variant_manifest(root, row, "cf")
@@ -286,21 +286,21 @@ def build_row_page(row: dict[str, Any], *, root: Path, mode: str) -> Image.Image
     left_x = MARGIN
     top_y = 650
     page.paste(full_montage, (left_x, top_y))
-    draw.text((left_x, 602), "Full 连续帧方阵图", font=body_font, fill=(0, 0, 0))
+    draw.text((left_x, 602), "Full Trajectory Square Montage", font=body_font, fill=(0, 0, 0))
 
     right_x = PAGE_W - MARGIN - 660
     page.paste(cf_montage, (right_x, top_y))
-    draw.text((right_x, 602), "CF 连续帧方阵图", font=body_font, fill=(0, 0, 0))
+    draw.text((right_x, 602), "CF Trajectory Square Montage", font=body_font, fill=(0, 0, 0))
 
     event_y = top_y + 760
     page.paste(event_fit, (right_x, event_y))
-    draw.text((right_x, event_y - 46), "关键事件覆盖图", font=body_font, fill=(0, 0, 0))
+    draw.text((right_x, event_y - 46), "Key Event Coverage Map", font=body_font, fill=(0, 0, 0))
 
     meta_lines = [
         f"layout = {row['layout_metadata'].get('world_variant')}",
         f"route = {row['layout_metadata'].get('route_variant')}",
-        f"full 事件步 = {row['full_event_steps']}",
-        f"cf 事件步 = {row['cf_event_steps']}",
+        f"Full event steps = {row['full_event_steps']}",
+        f"CF event steps = {row['cf_event_steps']}",
     ]
     add_wrapped_text(draw, left_x, 1840, "\n".join(meta_lines), small_font, 1120, 34, fill=(70, 70, 70))
     return page
@@ -330,7 +330,7 @@ def main() -> None:
         pages.append(build_row_page(row, root=root, mode=args.mode))
 
     if args.out_pdf is None:
-        suffix = "blind_zh" if args.mode == "blind" else "answer_key_zh"
+        suffix = "blind" if args.mode == "blind" else "answer_key"
         out_pdf = root / f"taskD_MW_structural_showcase_{suffix}.pdf"
     else:
         out_pdf = Path(args.out_pdf)
