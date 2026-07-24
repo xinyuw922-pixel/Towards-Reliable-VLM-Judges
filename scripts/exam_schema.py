@@ -212,7 +212,7 @@ def parse_verdict(text: str) -> Tuple[str, str]:
     if not matches:
         return None, "fail"
 
-    # Both polarities present → resolve via compound detection or first-occurrence heuristic
+    # Both polarities present → resolve via compound detection or final-verdict heuristic
     has_success = any(w in _SUCCESS_WORDS for _, _, w in matches)
     has_fail = any(w in _FAIL_WORDS for _, _, w in matches)
 
@@ -235,10 +235,10 @@ def parse_verdict(text: str) -> Tuple[str, str]:
                     if sw in _SUCCESS_WORDS and fw in _FAIL_WORDS:
                         return "Fail", "recoverable"
 
-        # Both non-compound: first occurrence wins
+        # Both non-compound: the final occurrence is the model's concluding verdict.
         all_sorted = sorted(matches, key=lambda x: x[0])
-        first_word = all_sorted[0][2]
-        return ("Success" if first_word in _SUCCESS_WORDS else "Fail", "recoverable")
+        last_word = all_sorted[-1][2]
+        return ("Success" if last_word in _SUCCESS_WORDS else "Fail", "recoverable")
 
     # Only one polarity present → longest keyword wins
     longest = sorted([(len(w), w) for _, _, w in matches], key=lambda x: x[0], reverse=True)[0][1]
