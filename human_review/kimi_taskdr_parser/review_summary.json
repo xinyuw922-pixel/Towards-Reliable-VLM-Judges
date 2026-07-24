@@ -1,0 +1,23 @@
+{
+  "items": 133,
+  "parser_changed": 49,
+  "parse_modes": {
+    "recoverable": 132,
+    "fail": 1
+  },
+  "strict_rows_omitted": 11,
+  "environments": {
+    "doorkey": 24,
+    "keycorridor": 20,
+    "lavagap": 24,
+    "memory": 21,
+    "multiroom": 20,
+    "redblue": 24
+  },
+  "variants": {
+    "cf": 44,
+    "full": 44,
+    "nocue": 45
+  },
+  "source": "frozen_outputs/minigrid/taskd-r/kimi-k2.5/score_per_row.jsonl"
+}

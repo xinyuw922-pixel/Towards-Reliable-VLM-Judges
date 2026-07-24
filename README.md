@@ -143,6 +143,7 @@ No API call is required to reproduce the frozen results.
 - [Repair contract](REBUTTAL_ARTIFACT_REPAIR.md)
 - [Task D-R scoring audit](SCORING_AUDIT.md)
 - [Frozen output notes](frozen_outputs/minigrid/taskd-r/README.md)
+- [Kimi parser human-review rules](human_review/kimi_taskdr_parser/REVIEW_RULES.md)
 
 `SCORING_AUDIT.md` records a Kimi-K2.5 metric correction that requires author
 review before updating paper tables. The raw responses are unchanged.
