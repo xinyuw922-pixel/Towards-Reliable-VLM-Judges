@@ -1,442 +1,159 @@
-# Towards Reliable VLM Judges: State-Conditional Invariance and Presentation-Aware Diagnostics
+# Towards Reliable VLM Judges
 
-Evaluating Vision-Language Models (VLMs) on causal reasoning tasks in grid worlds (MiniGrid) and 3D environments (MiniWorld).
+Code and frozen artifacts for state-conditional invariance and
+presentation-aware diagnostics in MiniGrid and MiniWorld.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+This rebuttal repair branch prioritizes an auditable path from raw model
+responses to MiniGrid Task D-R metrics. It preserves the historical release
+while correcting missing code, a Task D/Task D-R UID mismatch, and a
+recoverable-verdict parser defect.
 
----
+## Reproduce Frozen Task D-R
 
-## Quick Start
+Python 3.10 or newer is sufficient. The frozen reproduction path uses only the
+standard library.
 
 ```bash
-# Clone and setup
-git clone https://github.com/xinyuw922-pixel/Towards-Reliable-VLM-Judges.git
+git clone --branch rebuttal-artifact-repair-2026-07-24 \
+  https://github.com/xinyuw922-pixel/Towards-Reliable-VLM-Judges.git
 cd Towards-Reliable-VLM-Judges
 
-# Install dependencies
-pip install -r requirements_current.txt
-
-# Run MiniGrid evaluation pipeline
-./scripts/run_full_pipeline_minigrid.sh
-
-# Run MiniWorld evaluation pipeline
-./scripts/run_full_pipeline_miniworld.sh
+python scripts/validate_release.py
+python scripts/reproduce_frozen_results.py \
+  --output-dir /tmp/gridwm-taskdr-reproduced
 ```
 
----
+The second command:
 
-## Overview
+1. validates the exam, images, hashes, model set, and exact UID joins;
+2. re-scores all ten frozen response files;
+3. compares every regenerated per-row score with the published score;
+4. regenerates the Task D-R metric table; and
+5. compares it with the frozen metric table.
 
-GridWM-Judge evaluates VLMs on causal reasoning by testing their ability to:
+Successful completion ends with:
 
-1. **Predict successor states** - Given an action and current state, predict the outcome
-2. **Perceive environment state** - Understand spatial relationships and object properties
-3. **Distinguish causal mechanisms** - Differentiate between intervention effects and nuisance variations
-4. **Generalize across environments** - Transfer knowledge from training to novel settings
+```text
+PASS: reproduced 10 models and metrics
+```
 
-### Tasks
+## Frozen Artifact
 
-| Task | Description | Evaluates |
-|------|-------------|-----------|
-| **Task A** | Next state prediction | Causal reasoning: action -> consequence |
-| **Task B** | Perception & spatial reasoning | Environment understanding |
-| **Task C** | Trajectory outcome classification | Intervention discrimination |
-| **Task D** | Cross-environment generalization | Transfer learning |
-| **Task E** | Complex reasoning chains | Multi-step causal inference |
+```text
+datasets/minigrid/taskd-r/
+├── task_d_exam.jsonl
+├── task_d_r_exam.jsonl
+├── manifest.json
+├── authority_manifest.json
+├── prompt_note.md
+└── images/taskDR/
 
----
+frozen_outputs/minigrid/taskd-r/
+├── SHA256SUMS
+├── taskdr_metrics.csv
+└── <model>/
+    ├── responses.jsonl
+    ├── score_per_row.jsonl
+    └── score_report.json
+```
 
-## Installation
+Task D-R contains 144 rows:
 
-### Dependencies
+| Dimension | Distribution |
+|---|---|
+| Environments | 6, with 24 rows each |
+| Independent query groups | 12, with 2 per environment |
+| Variants | 48 Full, 48 NoCue, 48 CF |
+| Gold labels | 96 Success, 48 Fail |
+| Presentation conditions | clean-neutral, clean-positive, clean-negative, style-neutral |
+| Models | 10 frozen response bundles |
+
+Every model response set has an exact 144/144 UID join to the `DR.*` exam and
+zero missing-response or API-error rows.
+
+## Scoring
+
+The SSOT scorer reads only an exam directory and raw response JSONL:
 
 ```bash
-# Install all dependencies from requirements file
-pip install -r requirements_current.txt
-
-# Or minimal dependencies
-pip install Pillow pandas numpy scipy python-dotenv
-pip install statsmodels torch  # Optional
+python scripts/05_scoring/score_exam.py \
+  --exam_dir datasets/minigrid/taskd-r \
+  --responses frozen_outputs/minigrid/taskd-r/gpt-4o/responses.jsonl \
+  --out /tmp/gpt-4o-score-report.json \
+  --per_row_out /tmp/gpt-4o-score-per-row.jsonl
 ```
 
-### API Configuration
-
-Create a `.env` file in the repository root:
+Regenerate the Task D-R metric table from per-row scores:
 
 ```bash
-# Zhizengzeng API (supports GPT / Claude / Gemini / Qwen)
-ZZZ_API_KEY=your_api_key
-ZHIZENGZENG_API_KEY=your_api_key
-
-# Alternative providers
-GEMINI_API_KEY=your_gemini_key
-MOONSHOT_API_KEY=your_moonshot_key
+python scripts/05_scoring/summarize_taskdr.py \
+  --scores-root frozen_outputs/minigrid/taskd-r \
+  --output /tmp/taskdr_metrics.csv
 ```
 
----
+Task D-R baseline metrics use one neutral, clean, original row per group:
 
-## Dataset Structure
+- `p_active`: fraction of groups judged Success on Full.
+- `IDR_raw`: fraction judged Success on Full and Fail on matched CF.
+- `IDR_cond`: `IDR_raw / p_active` when at least one Full group is active.
+- `NS` and `JCR`: paired stability across framing or visual presentations.
+- `LES`: the frozen Task D-R table uses the deterministic L3 McNemar
+  effect-size rule.
 
-### Pipeline Outputs (`outputs/`)
+Invalid, empty, truncated, refused, or otherwise unparsable outputs count as
+incorrect. Recoverable responses use the model's concluding verdict when both
+success and failure terms occur.
 
-All generated data is stored in the `outputs/` directory. This directory is automatically created when running the pipeline scripts.
+## Inference
 
-```
-outputs/                        # Pipeline outputs (auto-generated)
-├── raw_data/                   # Raw trajectory data
-│   ├── doorkey/
-│   ├── keycorridor/
-│   ├── memory/
-│   ├── multiroom/
-│   ├── redblue/
-│   └── lavagap/
-├── exams_abc/                  # Task A/B/C/E exams + mock responses + scores
-├── exams_taskd/                # Task D exam + scores
-├── ablation_k4/               # Ablation: k=4 context frames
-├── ablation_k12/              # Ablation: k=12 context frames
-├── split/                     # Task A split/composite experiments
-├── exams_taskc_split/         # Task C split/composite
-├── ablation/                  # Action ablation (shuffle/mask)
-└── miniworld/                  # MiniWorld pipeline outputs
-    ├── taskA-MW-v2-prototype/
-    ├── taskA-MW-v2-crossenv/
-    ├── taskC-MW-family-prototypes/
-    ├── taskC-MW-formal-bank/
-    ├── taskD-MW-fourrooms/
-    ├── taskD-MW-storyboard-prototype/
-    ├── taskD-MW-highdisc-round1/
-    ├── taskD-MW-highdisc-round2/
-    ├── taskD-MW-highdisc-round3/
-    └── taskD-MW-migration-showcase/
-```
----
-
-## Usage
-
-### Full Pipeline (Recommended)
-
-The easiest way to run evaluation:
-
-#### MiniGrid Pipeline
+The restored inference entry point is:
 
 ```bash
-# Full pipeline (generate trajectories -> exams -> VLM simulation -> scoring)
-./scripts/run_full_pipeline_minigrid.sh
-
-# Skip trajectory generation (use existing data)
-./scripts/run_full_pipeline_minigrid.sh --skip-trajectories
-
-# Skip sampling/exams generation (VLM simulation only)
-./scripts/run_full_pipeline_minigrid.sh --skip-sampling --skip-exams
-
-# Custom parameters
-./scripts/run_full_pipeline_minigrid.sh --seed 42 --correct-rate 0.65 --c-k 8
-
-# Ablation studies only
-./scripts/run_full_pipeline_minigrid.sh --skip-trajectories --skip-sampling --skip-exams --skip-split --skip-vlm
+python scripts/04_inference/run_inference.py --help
 ```
 
-#### MiniWorld Pipeline
-
-```bash
-# Full pipeline (generate tasks -> requests -> VLM simulation -> scoring)
-./scripts/run_full_pipeline_miniworld.sh
-
-# Skip specific tasks
-./scripts/run_full_pipeline_miniworld.sh --skip-task-c --skip-task-d
-
-# Custom parameters
-./scripts/run_full_pipeline_miniworld.sh --seed 42 --correct-rate 0.65 --obs-width 640 --obs-height 480
-
-# Skip VLM simulation (exam generation only)
-./scripts/run_full_pipeline_miniworld.sh --skip-vlm
-```
-
-### Step-by-Step Evaluation (MiniGrid)
-
-#### 1. Generate Trajectories
-
-```bash
-# Generate raw trajectory data
-python scripts/02_trajectories/minigrid/tasks/doorkey/gen_doorkey_triplets.py --out-dir outputs/raw_data/doorkey --num 10
-python scripts/02_trajectories/minigrid/tasks/keycorridor/gen_keycorridor_triplets.py --out-dir outputs/raw_data/keycorridor --num 10
-# ... other tasks
-```
-
-#### 2. Sample Data
-
-```bash
-python scripts/sample_raw_data.py --src outputs/raw_data --dst scripts/outputs/raw_data --seed 42
-```
-
-#### 3. Build Exams
-
-```bash
-# Build Task A/B/C exams
-python scripts/01_generators/minigrid/build_exam.py --root scripts/outputs/raw_data --seed 42 --c-k 8 --out-dir outputs/exams_abc
-
-# Build Task D exam
-python scripts/01_generators/minigrid/generate_task_d_v3_144.py --raw-root scripts/outputs/raw_data --out-dir outputs/exams_taskd --groups-per-env 8
-
-# Ablation variants
-python scripts/01_generators/minigrid/build_exam.py --root scripts/outputs/raw_data --seed 42 --c-k 4 --out-dir outputs/ablation_k4
-python scripts/01_generators/minigrid/build_exam.py --root scripts/outputs/raw_data --seed 42 --c-k 12 --out-dir outputs/ablation_k12
-```
-
-#### 4. Run Inference
-
-Core script: `scripts/04_inference/run_inference.py`
+Example API invocation:
 
 ```bash
 python scripts/04_inference/run_inference.py \
-  --requests outputs/exams_abc/task_a_exam.jsonl \
-  --responses_dir runs/my_run/taskA \
-  --model gpt-4o \
+  --requests path/to/requests.jsonl \
+  --responses_dir runs/example \
   --backend openai_compatible \
   --provider zhizengzeng \
-  --max_new_tokens 256 \
-  --temperature 0.0
+  --model gpt-4o \
+  --temperature 0
 ```
 
-### Model Configuration
+Inference requires the dependencies used by the selected backend. API keys
+must be supplied through environment variables or an untracked `.env` file.
+No API call is required to reproduce the frozen results.
 
-| Model Family | `--backend` | `--provider` |
-|--------------|-------------|--------------|
-| GPT (gpt-4o, gpt-5) | `openai_compatible` | `zhizengzeng` |
-| Claude | `openai_compatible` | `zhizengzeng` |
-| Gemini | `openai_compatible` | `zhizengzeng` or `gemini` |
-| Qwen VL | `openai_compatible` | `zhizengzeng` |
-| Kimi | `openai_compatible` | `moonshot` |
+## Tasks
 
-#### 5. Score Results
+| Task | Diagnostic |
+|---|---|
+| A | Atomic next-state prediction |
+| B | Structured scene perception |
+| C | Trajectory outcome judgment under nuisance transformations |
+| D / D-R | Paired Full/NoCue/CF outcome judgment; D-R includes a successful reference |
+| E | Long-range discrete state tracking |
 
-```bash
-# Score Task A/B/C/E exams
-python scripts/05_scoring/score_exam.py \
-  --exam_dir outputs/exams_abc \
-  --responses outputs/exams_abc/responses_mock.jsonl \
-  --out outputs/exams_abc/score_mock.json
+## Audit Notes
 
-# Score Task D
-python scripts/05_scoring/score_exam.py \
-  --exam_dir outputs/exams_taskd \
-  --responses outputs/exams_abc/responses_mock.jsonl \
-  --out outputs/exams_taskd/score_mock.json
+- [Repair contract](REBUTTAL_ARTIFACT_REPAIR.md)
+- [Task D-R scoring audit](SCORING_AUDIT.md)
+- [Frozen output notes](frozen_outputs/minigrid/taskd-r/README.md)
 
-# Compute IDR (Intervention Discrimination Rate)
-python scripts/05_scoring/compute_idr.py \
-  --per-row-csv outputs/exams_abc/per_row.csv \
-  --output-csv outputs/exams_abc/idr_results.csv
+`SCORING_AUDIT.md` records a Kimi-K2.5 metric correction that requires author
+review before updating paper tables. The raw responses are unchanged.
 
-# Compute LES (Leakage Effect Size)
-python scripts/05_scoring/compute_les.py \
-  --per-row-csv outputs/exams_abc/per_row.csv \
-  --output-csv outputs/exams_abc/les_results.csv
-```
+## Repository Scope
 
-### Step-by-Step Evaluation (MiniWorld)
+The repository also retains generators, inference utilities, MiniWorld
+experiments, renderers, and general scoring modules. They are research code and
+do not all form a single one-command pipeline. The commands above are the
+strictly validated public reproduction path for this repair branch.
 
-#### 1. Generate Tasks
+## License
 
-```bash
-# Task A: next-state prediction
-python scripts/02_trajectories/miniworld/gen_taskA_MW_v2_prototype.py \
-  --out_dir outputs/miniworld/taskA-MW-v2-prototype \
-  --obs_width 320 --obs_height 240
-
-# Task C: trajectory classification
-python scripts/02_trajectories/miniworld/gen_taskC_MW_formal_exam.py \
-  --out_dir outputs/miniworld/taskC-MW-formal-bank \
-  --obs_width 320 --obs_height 240 --auto-deps
-
-# Task D: cross-environment generalization
-python scripts/02_trajectories/miniworld/gen_taskD_MW_fourrooms.py \
-  --out_dir outputs/miniworld/taskD-MW-fourrooms \
-  --obs_width 640 --obs_height 480 --num_questions 15
-```
-
-#### 2. Build API Requests
-
-```bash
-python scripts/04_inference/build_taskA_MW_v2_requests.py \
-  --exam_jsonl outputs/miniworld/taskA-MW-v2-prototype/taskA-MW-v2-prototype.jsonl \
-  --out outputs/miniworld/taskA-MW-v2-prototype/requests.jsonl
-
-python scripts/04_inference/build_taskC_MW_formal_exam_requests.py \
-  --exam_jsonl outputs/miniworld/taskC-MW-formal-bank/task_c_exam.jsonl \
-  --out outputs/miniworld/taskC-MW-formal-bank/requests.jsonl
-```
-
-#### 3. Run Inference
-
-```bash
-python scripts/04_inference/run_inference.py \
-  --requests outputs/miniworld/taskA-MW-v2-prototype/requests.jsonl \
-  --responses_dir runs/miniworld/taskA \
-  --model gpt-4o
-```
-
-#### 4. Score Results
-
-```bash
-python scripts/05_scoring/score_taskA_MW_v2_inference.py \
-  --exam_jsonl outputs/miniworld/taskA-MW-v2-prototype/taskA-MW-v2-prototype.jsonl \
-  --responses outputs/miniworld/taskA-MW-v2-prototype/responses.jsonl \
-  --out outputs/miniworld/taskA-MW-v2-prototype/score_report.json
-
-python scripts/05_scoring/score_taskC_MW_inference.py \
-  --exam_jsonl outputs/miniworld/taskC-MW-formal-bank/task_c_exam.jsonl \
-  --responses outputs/miniworld/taskC-MW-formal-bank/responses.jsonl \
-  --out outputs/miniworld/taskC-MW-formal-bank/score_summary.json
-```
-
----
-
-## Metrics
-
-| Metric | Description | Tasks |
-|--------|-------------|-------|
-| `Acc` | Accuracy (prediction = ground truth) | All |
-| `IDR` | Intervention Discrimination Rate | C, D |
-| `LES` | Leakage Effect Size | C |
-| `JAccneu` | Neutral framing accuracy | C |
-| `VCC` | Vision-Consistency Consistency | C |
-| `Acc_A1` | Task A (successor state) accuracy | A |
-
----
-
-## Project Structure
-
-```
-GridWM-Judge/
-├── outputs/                  # Pipeline outputs (auto-generated)
-│   ├── raw_data/            # Raw trajectory data
-│   ├── exams_abc/           # Task A/B/C/E exams + mock responses + scores
-│   ├── exams_taskd/         # Task D exam + scores
-│   ├── ablation_k4/        # Ablation: k=4 context frames
-│   ├── ablation_k12/        # Ablation: k=12 context frames
-│   ├── split/              # Task A split/composite experiments
-│   ├── exams_taskc_split/  # Task C split/composite
-│   ├── ablation/           # Action ablation (shuffle/mask)
-│   └── miniworld/          # MiniWorld pipeline outputs
-├── scripts/
-│   ├── run_full_pipeline_minigrid.sh    # MiniGrid one-click evaluation
-│   ├── run_full_pipeline_miniworld.sh   # MiniWorld one-click evaluation
-│   ├── run_full_pipeline.sh             # Legacy combined pipeline
-│   ├── sample_raw_data.py               # Data sampling utility
-│   ├── exam_schema.py                   # Exam schema definitions
-│   ├── 01_generators/                  # Exam generation
-│   │   └── minigrid/
-│   │       ├── build_exam.py
-│   │       ├── build_taskA_split_format_probe_requests.py
-│   │       ├── build_taskce_api_smoke_requests.py
-│   │       ├── build_exam_task_e_v12.py
-│   │       ├── build_exam_task_e_v13_*.py
-│   │       └── generate_task_d_v3_144.py
-│   ├── 02_trajectories/                # Trajectory generation
-│   │   ├── minigrid/
-│   │   │   ├── config.py
-│   │   │   ├── gen_action_ablation.py
-│   │   │   ├── split_taskA_frames.py
-│   │   │   └── tasks/
-│   │   │       ├── doorkey/
-│   │   │       ├── keycorridor/
-│   │   │       ├── lavagap/
-│   │   │       ├── memory/
-│   │   │       ├── multiroom/
-│   │   │       └── redblue/
-│   │   └── miniworld/                  # MiniWorld trajectory generators
-│   ├── 03_postprocess/                 # Post-processing
-│   │   ├── audit/                       # Audit-related scripts
-│   │   └── framing/                     # Framing transformation
-│   ├── 04_inference/                    # VLM inference
-│   │   ├── run_inference.py
-│   │   ├── run_canonical_pipeline.py
-│   │   ├── generate_mock_responses.py
-│   │   ├── generate_mock_miniworld.py
-│   │   ├── build_taskA_MW_v2_requests.py
-│   │   ├── build_taskC_MW_formal_exam_requests.py
-│   │   └── build_taskD_MW_*.py
-│   ├── 05_scoring/                      # Evaluation & metrics
-│   │   ├── score_exam.py
-│   │   ├── score_miniworld_canonical.py
-│   │   ├── score_taskA_MW_v2_inference.py
-│   │   ├── score_taskC_MW_inference.py
-│   │   └── score_taskD_MW_*.py
-│   ├── 06_rendering/                   # PDF/figure rendering
-│   │   ├── render_taskA_MW_*.py
-│   │   ├── render_taskC_MW_*.py
-│   │   ├── render_taskD_MW_*.py
-│   │   ├── render_taskb_review_pdf.py
-│   │   └── render_taskdr_review_pdf.py
-│   └── 08_export/                      # Results export
-├── datasets/                            # Static datasets (empty placeholder)
-├── config.py                           # Configuration
-├── requirements_current.txt            # Full dependencies
-├── requirements_miniworld.txt          # MiniWorld dependencies
-└── LICENSE
-```
-
----
-
-## Advanced Options
-
-### Ablation Studies (MiniGrid)
-
-```bash
-# Test with different context sizes
-./scripts/run_full_pipeline_minigrid.sh --c-k 4   # Fewer frames
-./scripts/run_full_pipeline_minigrid.sh --c-k 12  # More frames
-
-# Action ablation (shuffle/mask actions)
-python scripts/02_trajectories/minigrid/gen_action_ablation.py \
-  --exam outputs/exams_abc/task_a_exam.jsonl \
-  --output-dir outputs/ablation
-```
-
-### VLM Provider Configuration
-
-Edit `config.py` or set environment variables:
-
-```bash
-# Use specific provider
-export VLM_PROVIDER=zhizengzeng  # or "gemini", "moonshot"
-export VLM_MODEL=gpt-4o
-
-# For MiniWorld with headless rendering
-./scripts/run_full_pipeline_miniworld.sh --obs-width 640 --obs-height 480
-```
-
-### Oracle Inference (for VCC scoring)
-
-Oracle is a text-only baseline (no images) used to measure pixel-text consistency.
-
-```bash
-# Build oracle requests
-python scripts/build/build_oracle_requests.py \
-  --exam outputs/exams_abc/task_c_exam.jsonl \
-  --output runs/my_run/oracle/requests.jsonl
-
-# Run oracle inference
-python scripts/04_inference/run_oracle_inference.py \
-  --exam runs/my_run/oracle/requests.jsonl \
-  --output-dir runs/my_run/oracle
-```
-
----
-
-## FAQ
-
-**Q: API quota exceeded?**
-A: Rerun the same command - `run_inference.py` supports resume and skips completed rows.
-
-**Q: How to speed up inference?**
-A: Use `--workers N` for parallel requests (e.g., `--workers 8`).
-
-**Q: Scoring error "no LES-eligible rows"?**
-A: Verify the response JSONL contains temporal/visual probe data and `--per-row-csv` path is correct.
-
-**Q: How are pixel and oracle responses aligned?**
-A: Both scripts auto-align via UID (`exam_id` field). Ensure both response files exist.
-
----
+MIT. See [LICENSE](LICENSE).

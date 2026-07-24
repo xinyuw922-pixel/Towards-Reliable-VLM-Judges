@@ -7,13 +7,8 @@ import argparse
 import csv
 import json
 import math
-import sys
 from pathlib import Path
 from typing import Any, Iterable
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
 
 FIELDS = [
     "representation", "model", "JAccneu_D", "Acc_full_D", "Acc_nocue_D",
@@ -24,8 +19,6 @@ FIELDS = [
     "d_logit_frame_D", "LES_frame_method", "LES_vis_D", "d_logit_vis_D",
     "LES_vis_method", "n_rows_D_raw", "n_groups_D", "source",
 ]
-
-_LES_BACKEND: tuple[Any, Any] | None = None
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -80,52 +73,36 @@ def classify(p_active: float | None, acc_cf: float | None) -> str:
     return "nondegenerate"
 
 
-def load_les() -> tuple[Any, Any]:
-    """Load compute_les.py from the numeric scoring directory."""
-    global _LES_BACKEND
-    if _LES_BACKEND is not None:
-        return _LES_BACKEND
-    import importlib.util
-
-    module_path = Path(__file__).with_name("compute_les.py")
-    spec = importlib.util.spec_from_file_location("gridwm_compute_les", module_path)
-    if spec is None or spec.loader is None:
-        return None, None
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    try:
-        import pandas
-    except ImportError:
-        return None, None
-    _LES_BACKEND = (pandas, module.compute_les_gee)
-    return _LES_BACKEND
-
-
 def les(
     rows: list[dict[str, Any]], model: str, family: str, baseline: str
 ) -> tuple[float | None, float | None, str]:
-    pandas, compute = load_les()
-    if pandas is None or compute is None or not rows:
+    """Apply the frozen L3 McNemar effect-size rule."""
+    if not rows:
         return None, None, "unavailable"
-    records = []
+    by_group: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
-        prediction = row.get("pred_norm")
-        if prediction not in {"Success", "Fail"}:
+        by_group.setdefault(row["group_id"], []).append(row)
+    discordant_01 = 0
+    discordant_10 = 0
+    for group_rows in by_group.values():
+        baseline_rows = [row for row in group_rows if row.get(family) == baseline]
+        probe_rows = [row for row in group_rows if row.get(family) != baseline]
+        if not baseline_rows or not probe_rows:
             continue
-        records.append({
-            "model": model,
-            "task": "D",
-            "group_id": row["group_id"],
-            "family": family,
-            "phi_id": row[family],
-            "variant": "full",
-            "y_pred": 1 if prediction == "Success" else 0,
-        })
-    if not records:
-        return None, None, "unavailable"
-    result = compute(pandas.DataFrame(records), family, baseline)
-    return float(result.les_beta), float(result.d_logit), result.method
+        left = baseline_rows[0].get("pred_norm")
+        right = probe_rows[0].get("pred_norm")
+        if left not in {"Success", "Fail"} or right not in {"Success", "Fail"}:
+            continue
+        if left == "Fail" and right == "Success":
+            discordant_01 += 1
+        elif left == "Success" and right == "Fail":
+            discordant_10 += 1
+    if discordant_10 > 0 and discordant_01 > 0:
+        beta = math.log(discordant_01 / discordant_10)
+    else:
+        beta = 0.0
+    effect = abs(beta)
+    return effect, effect / (math.pi / math.sqrt(3)), "L3_McNemar"
 
 
 def summarize_model(model_dir: Path) -> dict[str, Any]:
