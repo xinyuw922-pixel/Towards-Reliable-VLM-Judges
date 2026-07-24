@@ -1,0 +1,8 @@
+{
+  "exam_dir": "datasets/minigrid/taskd-r",
+  "default_exam": "task_d_exam.jsonl",
+  "rows": 144,
+  "mode": "task_d_reference_aided_mainline_expanded_v2",
+  "source": "datasets_canonical_closeout_2026-04-03/taskd/task_d_exam.jsonl",
+  "note": "Task D-R expanded package adds nocue queries, style visual probes, and framing variants (neu/pos/neg on clean)."
+}

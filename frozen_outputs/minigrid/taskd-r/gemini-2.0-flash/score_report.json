@@ -1,0 +1,703 @@
+{
+  "ssot": {
+    "gold_source": "datasets/minigrid/taskd-r",
+    "scoring_policy": {
+      "A_C": "accuracy with strict vs recoverable parsing",
+      "B": {
+        "metric": "weighted perception IoU",
+        "weights": {
+          "agent_pos": 0.3,
+          "agent_dir": 0.0,
+          "carrying": 0.15,
+          "front_cell": 0.25,
+          "objects_jaccard": 0.2
+        },
+        "acc_threshold": 0.9
+      }
+    }
+  },
+  "coverage": {
+    "n_gold": 144,
+    "n_response_uids": 144,
+    "n_scored": 144,
+    "missing_responses": 0,
+    "extra_responses_not_in_gold": 0,
+    "gold_exam_schema_versions": {
+      "gridwm.exam.v1": 144
+    },
+    "responses_telemetry": {
+      "n_files": 1,
+      "files": [
+        "frozen_outputs/minigrid/taskd-r/gemini-2.0-flash/responses.jsonl"
+      ],
+      "total_lines": 144,
+      "n_uids": 144,
+      "duplicates_dropped": 0,
+      "response_schema_versions": {
+        "gridwm.response.v1": 144
+      },
+      "exam_schema_versions_in_responses": {
+        "gridwm.exam.v1": 144
+      }
+    }
+  },
+  "overall_micro": {
+    "n": 144,
+    "mean_score": 0.6041666666666666,
+    "acc": 0.6041666666666666,
+    "parse_mode": {
+      "recoverable": 23,
+      "strict": 121
+    },
+    "failure_hist": {
+      "D_wrong": 57
+    },
+    "api_error_rate": 0.0,
+    "missing_rate": 0.0
+  },
+  "per_task": {
+    "A": {
+      "n": 0,
+      "mean_score": 0.0,
+      "acc": 0.0,
+      "parse_mode": {},
+      "failure_hist": {},
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "B": {
+      "n": 0,
+      "mean_score": 0.0,
+      "acc": 0.0,
+      "parse_mode": {},
+      "failure_hist": {},
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "C": {
+      "n": 0,
+      "mean_score": 0.0,
+      "acc": 0.0,
+      "parse_mode": {},
+      "failure_hist": {},
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "D": {
+      "n": 144,
+      "mean_score": 0.6041666666666666,
+      "acc": 0.6041666666666666,
+      "parse_mode": {
+        "recoverable": 23,
+        "strict": 121
+      },
+      "failure_hist": {
+        "D_wrong": 57
+      },
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "E": {
+      "n": 0,
+      "mean_score": 0.0,
+      "acc": 0.0,
+      "parse_mode": {},
+      "failure_hist": {},
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    }
+  },
+  "per_env_task": {
+    "D:doorkey": {
+      "n": 24,
+      "mean_score": 0.7916666666666666,
+      "acc": 0.7916666666666666,
+      "parse_mode": {
+        "recoverable": 2,
+        "strict": 22
+      },
+      "failure_hist": {
+        "D_wrong": 5
+      },
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "D:keycorridor": {
+      "n": 24,
+      "mean_score": 0.4583333333333333,
+      "acc": 0.4583333333333333,
+      "parse_mode": {
+        "strict": 21,
+        "recoverable": 3
+      },
+      "failure_hist": {
+        "D_wrong": 13
+      },
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "D:lavagap": {
+      "n": 24,
+      "mean_score": 0.7916666666666666,
+      "acc": 0.7916666666666666,
+      "parse_mode": {
+        "strict": 22,
+        "recoverable": 2
+      },
+      "failure_hist": {
+        "D_wrong": 5
+      },
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "D:memory": {
+      "n": 24,
+      "mean_score": 0.3333333333333333,
+      "acc": 0.3333333333333333,
+      "parse_mode": {
+        "strict": 18,
+        "recoverable": 6
+      },
+      "failure_hist": {
+        "D_wrong": 16
+      },
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "D:multiroom": {
+      "n": 24,
+      "mean_score": 0.7083333333333334,
+      "acc": 0.7083333333333334,
+      "parse_mode": {
+        "strict": 23,
+        "recoverable": 1
+      },
+      "failure_hist": {
+        "D_wrong": 7
+      },
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    },
+    "D:redblue": {
+      "n": 24,
+      "mean_score": 0.5416666666666666,
+      "acc": 0.5416666666666666,
+      "parse_mode": {
+        "strict": 15,
+        "recoverable": 9
+      },
+      "failure_hist": {
+        "D_wrong": 11
+      },
+      "api_error_rate": 0.0,
+      "missing_rate": 0.0
+    }
+  },
+  "failure_hist": {
+    "D_wrong": 57
+  },
+  "failure_examples": {
+    "D_wrong": [
+      {
+        "uid": "DR.doorkey.doorkey_s000000.doorkey_s000001.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "doorkey",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.doorkey.doorkey_s000000.doorkey_s000001.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "doorkey",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.doorkey.doorkey_s000000.doorkey_s000001.nocue.orig.style.neu",
+        "task": "D",
+        "env_task": "doorkey",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.doorkey.doorkey_s000000.doorkey_s000002.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "doorkey",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.doorkey.doorkey_s000000.doorkey_s000002.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "doorkey",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000001.cf.orig.clean.neu",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000001.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000001.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000001.full.orig.style.neu",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000001.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000001.nocue.orig.style.neu",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000002.cf.orig.clean.neu",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000002.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000002.full.orig.clean.neu",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000002.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000002.full.orig.style.neu",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000002.nocue.orig.clean.neu",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.keycorridor.keycorridor_s000000.keycorridor_s000002.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "keycorridor",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.lavagap.lavagap_s000000.lavagap_s000001.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "lavagap",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.lavagap.lavagap_s000000.lavagap_s000001.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "lavagap",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.lavagap.lavagap_s000000.lavagap_s000001.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "lavagap",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.lavagap.lavagap_s000000.lavagap_s000002.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "lavagap",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.lavagap.lavagap_s000000.lavagap_s000002.nocue.orig.style.neu",
+        "task": "D",
+        "env_task": "lavagap",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000001.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000001.full.orig.clean.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000001.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000001.nocue.orig.clean.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000001.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000001.nocue.orig.style.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.cf.orig.clean.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.cf.orig.clean.neg",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.cf.orig.style.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.full.orig.clean.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.full.orig.style.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.nocue.orig.clean.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.memory.memory_s000000.memory_s000002.nocue.orig.style.neu",
+        "task": "D",
+        "env_task": "memory",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.multiroom.multiroom_s000000.multiroom_s000001.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "multiroom",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.multiroom.multiroom_s000000.multiroom_s000001.cf.orig.style.neu",
+        "task": "D",
+        "env_task": "multiroom",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.multiroom.multiroom_s000000.multiroom_s000001.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "multiroom",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.multiroom.multiroom_s000000.multiroom_s000001.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "multiroom",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.multiroom.multiroom_s000000.multiroom_s000002.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "multiroom",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.multiroom.multiroom_s000000.multiroom_s000002.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "multiroom",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.multiroom.multiroom_s000000.multiroom_s000002.nocue.orig.clean.neg",
+        "task": "D",
+        "env_task": "multiroom",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.redblue.redblue_s000000.redblue_s000001.cf.orig.clean.pos",
+        "task": "D",
+        "env_task": "redblue",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Success",
+        "gold": "Fail",
+        "error": null
+      },
+      {
+        "uid": "DR.redblue.redblue_s000000.redblue_s000001.full.orig.clean.neg",
+        "task": "D",
+        "env_task": "redblue",
+        "parse_mode": "strict",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.redblue.redblue_s000000.redblue_s000001.full.orig.style.neu",
+        "task": "D",
+        "env_task": "redblue",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      },
+      {
+        "uid": "DR.redblue.redblue_s000000.redblue_s000001.nocue.orig.clean.neu",
+        "task": "D",
+        "env_task": "redblue",
+        "parse_mode": "recoverable",
+        "failure": "D_wrong",
+        "pred_norm": "Fail",
+        "gold": "Success",
+        "error": null
+      }
+    ]
+  }
+}

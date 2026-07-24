@@ -1,0 +1,169 @@
+{
+  "task": "D-R",
+  "description": "Expanded reference-aided Task D audit with nocue, style, and prompt variants",
+  "source_exam": "datasets_canonical_closeout_2026-04-03/taskd/task_d_exam.jsonl",
+  "source_task": "D",
+  "selection_rule": {
+    "reference": "first full.orig.clean successful row per env",
+    "query_full_success": "2 full.orig.clean rows per env excluding reference group",
+    "query_nocue_success": "2 nocue.orig.clean rows per env excluding reference group",
+    "query_cf_fail": "2 cf.orig.clean rows per env excluding reference group",
+    "visual_probe": [
+      "clean",
+      "style"
+    ],
+    "framing_probe": [
+      "neu",
+      "pos",
+      "neg"
+    ],
+    "row_expansion": "per base query: clean_neu + clean_pos + clean_neg + style_neu"
+  },
+  "base_prompt": "Below are two storyboard trajectories from the same MiniGrid environment.\n\nReference trajectory:\nThis trajectory is a known successful example of completing the task in this environment.\n\nQuery trajectory:\nDetermine whether this trajectory also completes the same task goal as the reference trajectory.\n\nAnswer with ONLY: Success or Fail.",
+  "framing_preambles": {
+    "neu": "",
+    "pos": "The query trajectory seems to handle the task competently in the following example. ",
+    "neg": "The query trajectory seems to struggle with the task in the following example. "
+  },
+  "framing_translations_zh": {
+    "neu": "无额外语气暗示。",
+    "pos": "该题对 query 轨迹加入正向语气暗示：它看起来较为熟练地完成了任务。",
+    "neg": "该题对 query 轨迹加入负向语气暗示：它看起来在完成任务时比较吃力。"
+  },
+  "visual_translations_zh": {
+    "clean": "原始 clean 图像。",
+    "style": "style 图像：使用 cartoon-edge 风格化处理。"
+  },
+  "outputs": {
+    "default_exam": "task_d_exam.jsonl",
+    "alias_exam": "task_d_r_exam.jsonl",
+    "prompt_note": "prompt_note.md"
+  },
+  "stats": {
+    "envs": {
+      "doorkey": {
+        "reference_uid": "D.doorkey.doorkey_s000000.full.orig.clean",
+        "reference_group": "doorkey_s000000",
+        "selected_full": [
+          "D.doorkey.doorkey_s000001.full.orig.clean",
+          "D.doorkey.doorkey_s000002.full.orig.clean"
+        ],
+        "selected_nocue": [
+          "D.doorkey.doorkey_s000001.nocue.orig.clean",
+          "D.doorkey.doorkey_s000002.nocue.orig.clean"
+        ],
+        "selected_cf": [
+          "D.doorkey.doorkey_s000001.cf.orig.clean",
+          "D.doorkey.doorkey_s000002.cf.orig.clean"
+        ]
+      },
+      "keycorridor": {
+        "reference_uid": "D.keycorridor.keycorridor_s000000.full.orig.clean",
+        "reference_group": "keycorridor_s000000",
+        "selected_full": [
+          "D.keycorridor.keycorridor_s000001.full.orig.clean",
+          "D.keycorridor.keycorridor_s000002.full.orig.clean"
+        ],
+        "selected_nocue": [
+          "D.keycorridor.keycorridor_s000001.nocue.orig.clean",
+          "D.keycorridor.keycorridor_s000002.nocue.orig.clean"
+        ],
+        "selected_cf": [
+          "D.keycorridor.keycorridor_s000001.cf.orig.clean",
+          "D.keycorridor.keycorridor_s000002.cf.orig.clean"
+        ]
+      },
+      "lavagap": {
+        "reference_uid": "D.lavagap.lavagap_s000000.full.orig.clean",
+        "reference_group": "lavagap_s000000",
+        "selected_full": [
+          "D.lavagap.lavagap_s000001.full.orig.clean",
+          "D.lavagap.lavagap_s000002.full.orig.clean"
+        ],
+        "selected_nocue": [
+          "D.lavagap.lavagap_s000001.nocue.orig.clean",
+          "D.lavagap.lavagap_s000002.nocue.orig.clean"
+        ],
+        "selected_cf": [
+          "D.lavagap.lavagap_s000001.cf.orig.clean",
+          "D.lavagap.lavagap_s000002.cf.orig.clean"
+        ]
+      },
+      "memory": {
+        "reference_uid": "D.memory.memory_s000000.full.orig.clean",
+        "reference_group": "memory_s000000",
+        "selected_full": [
+          "D.memory.memory_s000001.full.orig.clean",
+          "D.memory.memory_s000002.full.orig.clean"
+        ],
+        "selected_nocue": [
+          "D.memory.memory_s000001.nocue.orig.clean",
+          "D.memory.memory_s000002.nocue.orig.clean"
+        ],
+        "selected_cf": [
+          "D.memory.memory_s000001.cf.orig.clean",
+          "D.memory.memory_s000002.cf.orig.clean"
+        ]
+      },
+      "multiroom": {
+        "reference_uid": "D.multiroom.multiroom_s000000.full.orig.clean",
+        "reference_group": "multiroom_s000000",
+        "selected_full": [
+          "D.multiroom.multiroom_s000001.full.orig.clean",
+          "D.multiroom.multiroom_s000002.full.orig.clean"
+        ],
+        "selected_nocue": [
+          "D.multiroom.multiroom_s000001.nocue.orig.clean",
+          "D.multiroom.multiroom_s000002.nocue.orig.clean"
+        ],
+        "selected_cf": [
+          "D.multiroom.multiroom_s000001.cf.orig.clean",
+          "D.multiroom.multiroom_s000002.cf.orig.clean"
+        ]
+      },
+      "redblue": {
+        "reference_uid": "D.redblue.redblue_s000000.full.orig.clean",
+        "reference_group": "redblue_s000000",
+        "selected_full": [
+          "D.redblue.redblue_s000001.full.orig.clean",
+          "D.redblue.redblue_s000002.full.orig.clean"
+        ],
+        "selected_nocue": [
+          "D.redblue.redblue_s000001.nocue.orig.clean",
+          "D.redblue.redblue_s000002.nocue.orig.clean"
+        ],
+        "selected_cf": [
+          "D.redblue.redblue_s000001.cf.orig.clean",
+          "D.redblue.redblue_s000002.cf.orig.clean"
+        ]
+      }
+    },
+    "rows_total": 144,
+    "env_counts": {
+      "doorkey": 24,
+      "keycorridor": 24,
+      "lavagap": 24,
+      "memory": 24,
+      "multiroom": 24,
+      "redblue": 24
+    },
+    "answer_counts": {
+      "Fail": 48,
+      "Success": 96
+    },
+    "visual_counts": {
+      "clean": 108,
+      "style": 36
+    },
+    "framing_counts": {
+      "neu": 72,
+      "pos": 36,
+      "neg": 36
+    },
+    "queries_per_env": {
+      "full_success": 2,
+      "nocue_success": 2,
+      "cf_fail": 2
+    }
+  }
+}
