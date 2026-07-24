@@ -82,6 +82,7 @@ class Gold:
     variant: Optional[str] = None
     temporal: Optional[str] = None
     visual: Optional[str] = None
+    framing: Optional[str] = None
 
     # Task-specific ground truth
     a_answer: Optional[str] = None          # "A"/"B"/"C"/"D"
@@ -165,8 +166,9 @@ def load_gold_from_exam_dir(exam_dir: Path) -> Dict[str, Gold]:
                 group_id=info.get("group_id"),
                 exam_schema_version=info.get("schema_version", EXAM_SCHEMA_VERSION),
                 variant=r.get("variant") or info.get("variant"),
-                temporal=info.get("temporal"),
+                temporal=r.get("temporal") or info.get("temporal"),
                 visual=r.get("visual") or info.get("visual"),
+                framing=r.get("framing") or info.get("framing"),
                 c_answer=r.get("answer"),
                 c_label=r.get("label"),
             )
@@ -741,13 +743,13 @@ def score_one(uid: str, g: Gold, r: Optional[Resp], weights_b: Dict[str, float],
     }
     if g.task == "A":
         row["t"] = g.t
-    if g.task == "C":
+    if g.task in ("C", "D"):
         row["variant"] = g.variant
         row["temporal"] = g.temporal
         if g.visual is not None:
             row["visual"] = g.visual
-    if g.task == "D":
-        row["variant"] = g.variant
+        if g.framing is not None:
+            row["framing"] = g.framing
 
     # P0-TaskE-fix: write Task E metadata before any early-return,
     # so that missing_response / api_error rows are counted correctly in per_task_E breakdowns
@@ -940,6 +942,8 @@ def main():
                    help="Output score report JSON path")
     ap.add_argument("--dump_rows", action="store_true",
                    help="Include per-example rows in output JSON (can be large)")
+    ap.add_argument("--per_row_out", type=str, default=None,
+                   help="Write one self-contained scored JSON object per gold UID")
     ap.add_argument("--max_bad_examples", type=int, default=50,
                    help="Store up to N failure examples per failure type")
     ap.add_argument("--b_acc_threshold", type=float, default=0.90,
@@ -979,6 +983,22 @@ def main():
     for uid, g in gold.items():
         r = responses.get(uid)
         rows.append(score_one(uid, g, r, weights_b, args.b_acc_threshold))
+
+    if args.per_row_out:
+        per_row_path = Path(args.per_row_out)
+        per_row_path.parent.mkdir(parents=True, exist_ok=True)
+        with per_row_path.open("w", encoding="utf-8") as f:
+            for row in rows:
+                response = responses.get(row["uid"])
+                enriched = dict(row)
+                enriched.update({
+                    "model": response.model if response else None,
+                    "raw": response.raw if response else "",
+                    "response_ok": response.ok if response else False,
+                    "response_error": response.error if response else "missing_response",
+                })
+                f.write(json.dumps(enriched, ensure_ascii=False) + "\n")
+        print(f"💾 Per-row scores written to {per_row_path} ({len(rows)} rows)")
 
     # P0-6: Write gold-enriched responses for downstream ablation scripts
     # Previously score_exam.py only output the report JSON, not enriched responses.
@@ -1025,6 +1045,9 @@ def main():
             if task == "D":
                 enriched.update({
                     "variant": s_row.get("variant", ""),
+                    "temporal": s_row.get("temporal", ""),
+                    "visual": s_row.get("visual", ""),
+                    "framing": s_row.get("framing", ""),
                 })
             if task == "E":
                 enriched.update({

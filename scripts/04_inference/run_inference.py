@@ -54,17 +54,16 @@ Version: 7.6.12 (Zhizengzeng-Qwen-VL-Compatible Edition)
 Date: 2025-01-14
 """
 
-# ── Setup path BEFORE other imports ──────────────────────────────────────────────
+# ── Setup repository imports before loading project helpers ──────────────────────
 import sys as _sys
 from pathlib import Path as _Path
-_scripts_dir = _Path(__file__).resolve().parent
-_repo_root = _scripts_dir.parent.parent  # repo root is 2 levels up from scripts/<module>/
+_repo_root = _Path(__file__).resolve().parents[2]
 if str(_repo_root) not in _sys.path:
     _sys.path.insert(0, str(_repo_root))
 
 # ── Load .env BEFORE any other imports that may use environment variables ────────
-from scripts.schema.env_bootstrap import load_project_dotenv as _load_project_dotenv
-_load_project_dotenv(_Path(__file__).resolve().parents[1] / ".env", override=False)
+from scripts.env_bootstrap import load_project_dotenv as _load_project_dotenv
+_load_project_dotenv(_repo_root / ".env", override=False)
 
 import argparse
 import base64
@@ -88,7 +87,7 @@ except ImportError:
     _torch_available = False
     torch = None
 
-from scripts.schema.exam_schema import (
+from scripts.exam_schema import (
     EXAM_SCHEMA_VERSION,
     REQUEST_SCHEMA_VERSION,
     RESPONSE_SCHEMA_VERSION,
@@ -118,7 +117,7 @@ except ImportError:
 # Dedicated sentinel for gateway errors to avoid collision with model outputs
 API_ERROR_PREFIX = "__GW_ERR__:"
 
-_RE_TASK_FROM_UID = re.compile(r"^(?P<task>[ABC])\.")
+_RE_TASK_FROM_UID = re.compile(r"^(?P<task>[ABCD])(?:-MW(?:-v\d)?)?[.\-_]|^(?P<task2>mw_rf)")
 
 
 # -------------------------
@@ -182,8 +181,17 @@ def encode_image_base64(path: str, max_side: int, quality: int, prefer_png: bool
 def _infer_task(uid: str) -> Optional[str]:
     if not uid:
         return None
-    m = _RE_TASK_FROM_UID.match(uid)
-    return m.group("task") if m else None
+    # Canonical format: A.xxx, B.xxx, C.xxx, E.xxx
+    # MiniWorld format: A-MW-v2.xxx, C-MW.xxx
+    # MiniWorld Task D: mw_rf50__... (no leading letter)
+    m = re.match(r"^(?P<task>A|B|C|D|E)(?:-MW(?:-v\d)?)?[.\-_]", uid)
+    if m:
+        return m.group("task")
+    # Legacy MiniWorld D format: mw_rf{num}__{family}__{template}__{variant}
+    m2 = re.match(r"^mw_rf\d+__", uid)
+    if m2:
+        return "D"
+    return None
 
 def _task_max_tokens(uid: str, default_max: int, task_overrides: Dict[str, int]) -> int:
     """
@@ -317,9 +325,23 @@ def sanitize_openai_extra_body(model: str, extra_body: Optional[Dict[str, Any]])
     1. Canonicalization: camelCase tokens -> snake_case
     2. Integrity: forbid overriding core fields (linear scan)
     3. O-series / Standard logic: remap & clean
+    4. Kimi-k2.5: inject thinking=disabled if not present (prevents empty responses)
     """
     eb = dict(extra_body or {})
     modified_logs = []
+
+    # --- 0. Kimi-k2.5: inject thinking=disabled, strip temperature from extra_body ---
+    m = (model or "").strip().lower()
+    if m.startswith("kimi"):
+        thinking = eb.get("thinking")
+        if thinking is None:
+            eb["thinking"] = {"type": "disabled"}
+            modified_logs.append("inject: thinking=disabled (kimi-k2.5 requirement)")
+        # kimi requires temperature at top-level, NOT in extra_body
+        # (extra_body temperature conflicts with the request-level parameter)
+        if "temperature" in eb:
+            eb.pop("temperature")
+            modified_logs.append("drop: temperature from extra_body (kimi requires it at top-level)")
 
     # --- 1. Canonicalization (Camel -> Snake) ---
     # Map common variations to standard snake_case keys
@@ -395,7 +417,7 @@ def sanitize_openai_extra_body(model: str, extra_body: Optional[Dict[str, Any]])
 def validate_backend_provider(backend: str, provider: str):
     allowed = {
         "openai_compatible": {
-            "custom", "openai", "siliconflow", "closeai",
+            "custom", "openai", "siliconflow", "closeai", "moonshot",
             # Unified Zhizengzeng providers (all use OpenAI-compatible interface)
             "zhizengzeng", "zhizengzeng_xai", "zhizengzeng_claude", "zhizengzeng_grok", "zhizengzeng_qwen"
         },
@@ -811,14 +833,39 @@ class GeminiRunner(Runner):
                     return f"{API_ERROR_PREFIX} {last_err}"
 
                 data = r.json()
+                if isinstance(data, dict) and data.get("error"):
+                    err = data.get("error")
+                    message = err.get("message") if isinstance(err, dict) else str(err)
+                    code = err.get("code") if isinstance(err, dict) else None
+                    last_err = f"provider error"
+                    if code:
+                        last_err += f" {code}"
+                    if message:
+                        last_err += f": {message}"
+                    if i < self.max_retries and self._is_retryable(r.status_code, last_err):
+                        time.sleep(self.backoff_base * (2**i))
+                        continue
+                    return f"{API_ERROR_PREFIX} {last_err}"
                 cands = data.get("candidates") or []
                 if not cands:
+                    # Gemini can return empty candidates with HTTP 200 (content filter, timeout, etc.)
+                    # Treat as retryable
+                    last_err = "empty candidates"
+                    if i < self.max_retries:
+                        time.sleep(self.backoff_base * (2**i))
+                        continue
                     return f"{API_ERROR_PREFIX} empty candidates"
 
                 content = (cands[0].get("content") or {})
                 out_parts = content.get("parts") or []
                 texts = [p["text"] for p in out_parts if isinstance(p, dict) and "text" in p]
-                return "".join(texts).strip() if texts else f"{API_ERROR_PREFIX} empty text"
+                if not texts:
+                    last_err = "empty text"
+                    if i < self.max_retries:
+                        time.sleep(self.backoff_base * (2**i))
+                        continue
+                    return f"{API_ERROR_PREFIX} empty text"
+                return "".join(texts).strip()
             except Exception as e:
                 last_err = str(e)
                 if i < self.max_retries and self._is_retryable(None, last_err):
@@ -1319,15 +1366,25 @@ def resolve_openai_provider(provider, base_url, api_key):
     if provider == "closeai":
         key = api_key or _pick_env("CLOSEAI_API_KEY")
         return "https://api.openai-proxy.org/v1", _need("CLOSEAI_API_KEY", key)
+    if provider == "moonshot":
+        # 月之暗面 (Moonshot) API - kimi-k2.5 model
+        # Endpoint: https://api.moonshot.cn/v1 (OpenAI-compatible)
+        key = api_key or _pick_env("MOONSHOT_API_KEY")
+        if not key:
+            # Fallback to ZZZ key if MOONSHOT_API_KEY not set
+            key = _pick_env("ZZZ_API_KEY") or _pick_env("ZHIZENGZENG_API_KEY")
+        return "https://api.moonshot.cn/v1", _need("MOONSHOT_API_KEY (or ZZZ_API_KEY)", key)
     if provider == "zhizengzeng_qwen":
         # Zhizengzeng Qwen VL models - uses Alibaba base URL
         key = api_key or _pick_env("ZZZ_API_KEY") or _pick_env("ZHIZENGZENG_API_KEY")
-        return "https://api.zhizengzeng.com/alibaba", _need("ZZZ_API_KEY or ZHIZENGZENG_API_KEY", key)
+        qwen_base = base_url or _pick_env("ZZZ_QWEN_BASE_URL") or "https://api.zhizengzeng.com/alibaba"
+        return qwen_base.rstrip("/"), _need("ZZZ_API_KEY or ZHIZENGZENG_API_KEY", key)
     if provider.startswith("zhizengzeng"):
         # Unified Zhizengzeng endpoint - all models via OpenAI-compatible interface
         # Support both official ZZZ_API_KEY and legacy ZHIZENGZENG_API_KEY for compatibility
         key = api_key or _pick_env("ZZZ_API_KEY") or _pick_env("ZHIZENGZENG_API_KEY")
-        return "https://api.zhizengzeng.com/v1", _need("ZZZ_API_KEY or ZHIZENGZENG_API_KEY", key)
+        zzz_base = base_url or _pick_env("ZZZ_OPENAI_BASE_URL") or _pick_env("ZHIZENGZENG_OPENAI_BASE_URL")
+        return (zzz_base or "https://api.zhizengzeng.com/v1").rstrip("/"), _need("ZZZ_API_KEY or ZHIZENGZENG_API_KEY", key)
     if provider == "custom":
         if not base_url: raise ValueError("provider=custom requires --base_url")
         key = api_key or _pick_env("OPENAI_API_KEY")
@@ -1343,7 +1400,8 @@ def resolve_gemini_provider(provider, base_url, api_key):
         # Official Google: https://generativelanguage.googleapis.com/
         # Zhizengzeng: https://api.zhizengzeng.com/google/
         key = api_key or _pick_env("ZZZ_API_KEY") or _pick_env("ZHIZENGZENG_GEMINI_API_KEY")
-        return "https://api.zhizengzeng.com/google/", _need("ZZZ_API_KEY or ZHIZENGZENG_GEMINI_API_KEY", key)
+        zzz_base = base_url or _pick_env("ZZZ_GEMINI_BASE_URL") or _pick_env("ZHIZENGZENG_GEMINI_BASE_URL")
+        return (zzz_base or "https://api.zhizengzeng.com/google/"), _need("ZZZ_API_KEY or ZHIZENGZENG_GEMINI_API_KEY", key)
     if provider == "custom":
         if not base_url: raise ValueError("provider=custom requires --base_url")
         key = api_key or _pick_env("GEMINI_API_KEY")
@@ -1352,6 +1410,19 @@ def resolve_gemini_provider(provider, base_url, api_key):
 
 def run(args):
     validate_backend_provider(args.backend, args.provider)
+
+    # --- Kimi-k2.5: auto-route to Moonshot direct API ---
+    # zhizengzeng proxy returns empty content on token truncation (finish_reason=length),
+    # while Moonshot preserves the truncated output. Route kimi models to Moonshot directly.
+    if (args.backend == "openai_compatible" and
+            "kimi" in (args.model or "").lower() and
+            args.provider not in ("moonshot", "moonshot_kimi")):
+        print(f"🔄 Auto-switching kimi model to provider=moonshot (Moonshot direct API)")
+        args.provider = "moonshot"
+        args.backend = "openai_compatible"
+        if args.temperature == 0.0:
+            args.temperature = 0.6  # kimi-k2.5 requires non-zero temperature with thinking=disabled
+            print(f"   Temperature: 0.0 -> 0.6 (kimi requirement)")
 
     # Resolve requests path (support exam mode)
     if hasattr(args, 'exam_dir') and args.exam_dir:
@@ -1854,7 +1925,7 @@ def run(args):
                 # P0-2: Hard Protocol Enforcement & Prompt Injection
                 if args.force_fuse:
                     if len(images) <= 1:
-                        # Single image: skip Fuse, raise error to prevent contamination
+                        # 单图不 Fuse，直接抛错防止污染
                         raise ValueError(f"Protocol Violation: --force_fuse set but found single image for {uid}. Task C Storyboard should run WITHOUT force_fuse.")
 
                     fused = True
@@ -2739,7 +2810,7 @@ if __name__ == "__main__":
     p.add_argument("--seed", type=int, help="Random seed")
 
     # API settings
-    p.add_argument("--api_timeout", type=float, default=60.0, help="API timeout seconds")
+    p.add_argument("--api_timeout", type=float, default=120.0, help="API timeout seconds")
     p.add_argument("--api_max_retries", type=int, default=3, help="Max API retries")
     p.add_argument("--api_backoff_base", type=float, default=2.0, help="Retry backoff base")
     p.add_argument("--min_interval_ms", type=int, default=0, help="Min interval between requests")

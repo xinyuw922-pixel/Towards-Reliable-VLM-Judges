@@ -80,6 +80,7 @@ def parse_exam_id(exam_id: str) -> Dict[str, Any]:
       A.<env_task>.<group_id>.t<step>
       B.<env_task>.<group_id>.t<frame>
       C.<env_task>.<group_id>.<variant>.<temporal>[.<visual>]
+      DR.<env_task>.<reference_group>.<query_group>.<variant>.<temporal>.<visual>.<framing>
     """
     uid = _as_nonempty_str(exam_id)
     if not uid:
@@ -112,6 +113,18 @@ def parse_exam_id(exam_id: str) -> Dict[str, Any]:
             out["visual"] = parts[5]
         if len(parts) >= 7:
             out["framing"] = parts[6]
+        return out
+
+    if task == "DR" and len(parts) >= 8:
+        out["task"] = "D"
+        out["audit_task"] = "D-R"
+        out["env_task"] = parts[1]
+        out["reference_group_id"] = parts[2]
+        out["group_id"] = parts[3]
+        out["variant"] = parts[4]
+        out["temporal"] = parts[5]
+        out["visual"] = parts[6]
+        out["framing"] = parts[7]
         return out
 
     return out
